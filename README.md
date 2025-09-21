@@ -41,7 +41,7 @@ Before you begin, ensure you have the following installed:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/cojocaru-david/portfolio.git
+   git clone https://github.com/jeff-williams/portfolio.git
    cd portfolio
    ```
 
@@ -145,11 +145,7 @@ The portfolio includes a post feedback system allowing visitors to like or disli
    - Select the closest region to your target audience
    - Click "Create Project"
 
-3. **Get Connection Details**
-   - In your project dashboard, find the connection string under "Connection Details"
-   - Save this connection string as you'll need it for your environment variables
-
-4. **Set Environment Variables**
+3. **Set Environment Variables**
    - Create a `.env` file in your project root (if not already present)
    - Add your database connection string:
      ```
@@ -158,7 +154,7 @@ The portfolio includes a post feedback system allowing visitors to like or disli
 
 ### Database Schema Setup
 
-Run the following SQL queries in the Neon SQL Editor to create the necessary tables for the feedback system:
+Run the following SQL queries in the Neon SQL Editor to create the tables for the feedback system:
 
 ```sql
 CREATE TABLE post_feedback (

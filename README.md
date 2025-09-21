@@ -5,6 +5,8 @@
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 
+![thubnail](https://i.imgur.com/zPgHtcu.png "Preview")
+
 A modern, high-performance personal portfolio and blog built with Astro.js. Designed to showcase your projects and technical writing with blazing-fast performance and exceptional SEO.
 
 ## ✨ Features
@@ -127,6 +129,10 @@ The project includes several utility functions in data-utils.ts:
 - `getSortedTags()` - Get tags sorted by usage count
 - `getPostsByAuthor(authorId)` - Get all posts by a specific author
 
+## 📊 Database Setup (Likes/Dislikes Feature)
+
+The portfolio includes a post feedback system allowing visitors to like or dislike blog posts. This feature requires a PostgreSQL database to store vote data. This guide explains how to set it up using [Neon.tech](https://neon.tech).
+
 ### Setting Up Neon.tech Database
 
 1. **Create a Neon.tech Account**
@@ -145,6 +151,117 @@ The project includes several utility functions in data-utils.ts:
      ```
      DATABASE_URL=your_neon_connection_string_here
      ```
+
+### Database Schema Setup
+
+Run the following SQL queries in the Neon SQL Editor to create the tables for the feedback system:
+
+```sql
+CREATE TABLE post_feedback (
+  id SERIAL PRIMARY KEY,
+  post_id VARCHAR(255) NOT NULL,
+  likes INTEGER DEFAULT 0,
+  dislikes INTEGER DEFAULT 0,
+  CONSTRAINT unique_post_id UNIQUE (post_id)
+);
+
+CREATE TABLE post_likes (
+  id SERIAL PRIMARY KEY,
+  post_id VARCHAR(255) NOT NULL,
+  fingerprint_id VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT unique_like UNIQUE (post_id, fingerprint_id)
+);
+
+CREATE TABLE post_dislikes (
+  id SERIAL PRIMARY KEY,
+  post_id VARCHAR(255) NOT NULL,
+  fingerprint_id VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT unique_dislike UNIQUE (post_id, fingerprint_id)
+);
+
+CREATE INDEX idx_post_feedback_post_id ON post_feedback (post_id);
+CREATE INDEX idx_post_likes_post_id_fingerprint ON post_likes (post_id, fingerprint_id);
+CREATE INDEX idx_post_dislikes_post_id_fingerprint ON post_dislikes (post_id, fingerprint_id);
+```
+
+### How the Feedback System Works
+
+The feedback system consists of three tables:
+- `post_feedback`: Stores aggregate counts of likes and dislikes for each post
+- `post_likes`: Records individual like actions with fingerprint IDs to prevent duplicate votes
+- `post_dislikes`: Records individual dislike actions with fingerprint IDs
+
+### API Implementation
+
+The portfolio includes API endpoints for handling likes and dislikes:
+
+1. **Fetching Post Feedback**
+   - GET request to `/api/like/{postId}` returns current like/dislike counts
+
+2. **Submitting Likes**
+   - POST request to `/api/like/{postId}` with fingerprint ID in the request body
+   - The system checks if the user has already liked/disliked the post
+   - If not, a like is recorded and the count is updated
+
+3. **Submitting Dislikes**
+   - POST request to `/api/dislike/{postId}` works similarly to the like endpoint
+   - Prevents duplicate votes from the same visitor
+
+### Working with the Database
+
+When a new blog post is created:
+- No manual database entry is needed
+- The first like/dislike action will automatically create the entry in `post_feedback`
+
+To reset likes for a post:
+```sql
+DELETE FROM post_likes WHERE post_id = 'your-post-id';
+DELETE FROM post_dislikes WHERE post_id = 'your-post-id';
+UPDATE post_feedback SET likes = 0, dislikes = 0 WHERE post_id = 'your-post-id';
+```
+
+To view post statistics:
+```sql
+SELECT * FROM post_feedback ORDER BY likes DESC;
+```
+
+To find which posts a specific user has interacted with:
+```sql
+SELECT post_id FROM post_likes WHERE fingerprint_id = 'specific-fingerprint-id';
+```
+
+### Troubleshooting
+
+If you encounter issues with the feedback system:
+
+1. **Check Environment Variables**
+   - Ensure your `.env` file contains the correct `DATABASE_URL`
+
+2. **Verify Database Connection**
+   - Add logging to your database connection code to check for errors
+   - Make sure your Neon.tech project is active and not in suspended state
+
+3. **Check for Errors in Console**
+   - The feedback component logs errors that can help diagnose issues
+
+4. **Reset User Vote State**
+   - Users can clear their localStorage to reset their voting state:
+     ```javascript
+     // In browser console
+     localStorage.clear()
+     ```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 📄 License
 

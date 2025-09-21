@@ -12,13 +12,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/cojocaru-david/portfolio.git"
+    "url": "https://github.com/jeff-williams/portfolio/issues"
   },
   "bugs": {
-    "url": "https://github.com/cojocaru-david/portfolio/issues"
+    "url": "https://github.com/jeff-williams/portfolio/issues"
   },
-  "homepage": "https://cojocarudavid.me",
-  "name": "cojocarudavid.me",
+  "homepage": "https://jeffwilliams.me",
+  "name": "jeffwilliams.me",
   "type": "module",
   "version": "1.1.0",
   "private": false,

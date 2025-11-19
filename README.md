@@ -257,6 +257,6 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 Data Engineer | Software Developer
 
 - 🌐 Website: [jeffwilliams.dev](https://jeffwilliams.dev)
-- 💼 LinkedIn: [linkedin.com/in/jeff-williams-24b9781b6](https://www.linkedin.com/in/jeff-williams-24b9781b6)
+- 💼 LinkedIn: [linkedin.com/in/jefferywilliams4](https://linkedin.com/in/jefferywilliams4/)
 - 📧 Email: jeffwilliams2030@gmail.com
 - 💻 GitHub: [github.com/JeffWilliams2](https://github.com/JeffWilliams2)

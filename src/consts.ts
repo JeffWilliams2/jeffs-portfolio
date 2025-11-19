@@ -4,7 +4,7 @@ export const SITE: Site = {
   title: 'Jeff Williams',
   description:
     "Data Engineer & Software Developer | M.S. Advanced Data Analytics (May 2025) | Building end-to-end data solutions from infrastructure to analytics across diverse industries | Experience spans production platforms, freelance projects, and internal enterprise deployments | Tech stack: Python, Airflow, dbt, Kubernetes, AWS, React, PostgreSQL, and modern data tools",
-  href: 'https://jeffwilliams.dev',
+  href: 'https://jeffs-portfolio-opal.vercel.app',
   author: 'Jeff Williams',
   locale: 'en-US',
   location: 'Texas, USA',

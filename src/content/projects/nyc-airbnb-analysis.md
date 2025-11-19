@@ -1,25 +1,106 @@
 ---
-name: 'NYC Airbnb Market Analysis'
-description: 'An interactive Tableau dashboard analyzing Airbnb rentals across NYC boroughs and neighborhoods. Features comprehensive price analysis, booking trends, and host performance metrics with dynamic visualizations.'
-tags: ['tableau', 'data-analysis', 'python', 'visualization', 'real-estate']
-link: 'https://public.tableau.com/app/profile/jeff.williams3778/viz/NYCAirbnbTrends_17399453506280/Dashboard1'
-startDate: '2025-09-01'
+name: 'NYC Taxi Data Analytics Pipeline'
+description: 'End-to-end data pipeline using Dagster orchestration processing 9.4M+ NYC taxi trip records with GeoPandas geographic analysis, DuckDB analytics, automated scheduling, and real-time monitoring.'
+tags: ['dagster', 'python', 'duckdb', 'geopandas', 'data-engineering', 'etl']
+link: 'https://github.com/JeffWilliams2'
+startDate: '2025-10-01'
 ---
 
-# NYC Airbnb Market Analysis Dashboard
+# NYC Taxi Data Analytics Pipeline
 
 ## Overview
 
-An interactive Tableau dashboard analyzing Airbnb rentals across New York City's boroughs and neighborhoods. The visualization provides insights into pricing patterns, booking trends, and host ratings in NYC's Airbnb market.
+Built end-to-end data pipeline using Dagster orchestration framework processing 9.4M+ NYC taxi trip records with automated scheduling, partitioned architecture, and geographic analysis capabilities. Demonstrates data engineering best practices with asset-based architecture and real-time monitoring.
 
-## Features
+## Key Features
 
-- Price comparison across NYC boroughs (Manhattan, Brooklyn, Queens, Bronx, Staten Island)
-- Interactive neighborhood-level price analysis
-- Monthly booking trends visualization
-- Top host performance metrics
-- Room type distribution analysis
-- Review frequency patterns
+### 🚀 Pipeline Architecture
+- **9.4M+ records** processed with Dagster orchestration
+- **Event-driven processing** with automated triggers
+- **Partitioned architecture** for efficient data handling
+- **Geographic analysis** with GeoPandas for spatial insights
+- **DuckDB analytics** for flexible data exploration
+
+### 📊 Analytics Capabilities
+- Monthly trip pattern analysis with automated scheduling
+- Geographic analysis for Manhattan-specific insights
+- Sub-second query performance with DuckDB
+- Automated reporting and data quality checks
+
+## Technical Architecture
+
+```
+┌──────────────────────────────────────────┐
+│      Data Source: NYC Taxi Dataset       │
+│         (9.4M+ trip records)             │
+└──────────────┬───────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────┐
+│     Dagster Asset-Based Pipeline         │
+│  • Automated scheduling                  │
+│  • Partitioned processing                │
+│  • Event-driven triggers                 │
+└──────────────┬───────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────┐
+│        Data Processing Layer             │
+│  • Python transformations                │
+│  • GeoPandas geographic ops              │
+│  • Data quality validation               │
+└──────────────┬───────────────────────────┘
+               │
+               ▼
+┌──────────────────────────────────────────┐
+│       DuckDB Analytics Engine            │
+│  • Sub-second query performance          │
+│  • Flexible aggregations                 │
+│  • Manhattan-specific analysis           │
+└──────────────────────────────────────────┘
+```
+
+## Data Engineering Highlights
+
+### 1. Dagster Orchestration
+**Asset-Based Architecture:**
+- Declarative pipeline definitions
+- Automatic dependency resolution
+- Built-in data lineage tracking
+- Partitioned datasets for scalability
+
+**Automated Scheduling:**
+- Monthly partitioning for trip data
+- Event-driven processing triggers
+- Backfill capabilities
+- Configurable refresh schedules
+
+### 2. Geographic Analysis with GeoPandas
+**Spatial Operations:**
+- Borough and zone-based aggregations
+- Manhattan-specific filtering
+- Geographic coordinate transformations
+- Spatial joins for enrichment
+
+**Use Cases:**
+- Trip patterns by neighborhood
+- Distance calculations
+- Zone-based metrics
+- Geographic visualization prep
+
+### 3. High-Performance Analytics
+**DuckDB Integration:**
+- Sub-second query performance on 9.4M+ records
+- In-process analytics engine
+- Optimized for aggregations
+- SQL interface for exploration
+
+**Performance Metrics:**
+- Complex aggregations: < 1 second
+- Geographic queries: < 2 seconds
+- Full dataset scans: < 5 seconds
+
+## Implementation Details
 
 ## Key Insights
 

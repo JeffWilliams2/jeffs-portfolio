@@ -3,8 +3,8 @@ import type { IconMap, SocialLink, Site } from '@/types'
 export const SITE: Site = {
   title: 'Jeff Williams',
   description:
-    "Data Engineer with startup experience designing data pipelines, data lakehouses, and performing advanced analytics. Skilled in Airflow, SQL, and Python, with a proven ability to migrate legacy systems into modern architectures. Unique blend of genomics data engineering experience and financial services background, enabling solutions with measurable business impact.",
-  href: 'https://jeffwilliams.dev', // Later update to custom domain or GitHub pages
+    "Data Engineer & Software Developer | M.S. Advanced Data Analytics (May 2025) | Building end-to-end data solutions from infrastructure to analytics across diverse industries | Experience spans production platforms, freelance projects, and internal enterprise deployments | Tech stack: Python, Airflow, dbt, Kubernetes, AWS, React, PostgreSQL, and modern data tools",
+  href: 'https://jeffwilliams.dev',
   author: 'Jeff Williams',
   locale: 'en-US',
   location: 'Texas, USA',
@@ -32,6 +32,10 @@ export const SOCIAL_LINKS: SocialLink[] = [
     label: 'GitHub',
   },
   {
+    href: 'https://www.linkedin.com/in/jefferywilliams4',
+    label: 'LinkedIn',
+  },
+  { 
     href: 'mailto:jeffwilliams2030@gmail.com',
     label: 'Email',
   },
@@ -40,6 +44,7 @@ export const SOCIAL_LINKS: SocialLink[] = [
 export const ICON_MAP: IconMap = {
   Website: 'lucide:globe',
   GitHub: 'lucide:github',
+  LinkedIn: 'lucide:linkedin',
   Instagram: 'lucide:instagram',
   Email: 'lucide:mail',
 }

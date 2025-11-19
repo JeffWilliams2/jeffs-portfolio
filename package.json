@@ -12,13 +12,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/jeff-williams/portfolio/issues"
+    "url": "https://github.com/JeffWilliams2/jeffs-portfolio"
   },
   "bugs": {
-    "url": "https://github.com/jeff-williams/portfolio/issues"
+    "url": "https://github.com/JeffWilliams2/jeffs-portfolio/issues"
   },
-  "homepage": "https://jeffwilliams.me",
-  "name": "jeffwilliams.me",
+  "homepage": "https://jeffwilliams.dev",
+  "name": "jeffs-portfolio",
   "type": "module",
   "version": "1.1.0",
   "private": false,

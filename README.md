@@ -1,11 +1,11 @@
-# Developer Portfolio & Blog
+# Jeff Williams - Portfolio
 
 ![Astro](https://img.shields.io/badge/Astro-FF5D01?style=for-the-badge&logo=astro&logoColor=white)
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 
-A modern, high-performance personal portfolio and blog built with Astro.js. Designed to showcase your projects and technical writing with blazing-fast performance and exceptional SEO.
+Personal portfolio and blog for Jeff Williams, a Data Engineer specializing in data pipelines, cloud infrastructure, and analytics. Built with Astro.js for blazing-fast performance.
 
 ## ✨ Features
 
@@ -39,26 +39,22 @@ Before you begin, ensure you have the following installed:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/jeff-williams/portfolio.git
-   cd portfolio
+   git clone https://github.com/JeffWilliams2/jeffs-portfolio.git
+   cd jeffs-portfolio
    ```
 
 2. **Install dependencies**
    ```bash
    npm install
-   # or
-   yarn install
    ```
 
 3. **Start the development server**
    ```bash
    npm run dev
-   # or
-   yarn dev
    ```
 
 4. **Open your browser**
-   Navigate to `http://localhost:4321` to see the site running locally.
+   Navigate to `http://localhost:3010` to see the site running locally.
 
 ## 📁 Project Structure
 
@@ -251,17 +247,16 @@ If you encounter issues with the feedback system:
      localStorage.clear()
      ```
 
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-# jeffs-portfolio-main
+
+## 📧 Contact
+
+**Jeff Williams**  
+Data Engineer | Software Developer
+
+- 🌐 Website: [jeffwilliams.dev](https://jeffwilliams.dev)
+- 💼 LinkedIn: [linkedin.com/in/jeff-williams-24b9781b6](https://www.linkedin.com/in/jeff-williams-24b9781b6)
+- 📧 Email: jeffwilliams2030@gmail.com
+- 💻 GitHub: [github.com/JeffWilliams2](https://github.com/JeffWilliams2)

@@ -247,6 +247,37 @@ If you encounter issues with the feedback system:
      localStorage.clear()
      ```
 
+## 🔄 Development Workflow
+
+### Branch Strategy
+
+- **`main`** - Production branch (auto-deploys to Vercel)
+- **`dev`** - Development branch (for testing changes)
+
+### When you're ready to make edits:
+
+```bash
+# Switch to dev branch
+git checkout dev
+
+# Make your changes
+# (edit projects, delete blog posts, clean up imports, etc.)
+
+# Commit and push
+git add -A
+git commit -m "Your changes description"
+git push origin dev
+
+# Vercel will create a preview deployment - test it!
+
+# When satisfied, merge to main:
+git checkout main
+git merge dev
+git push origin main
+
+# Your live site will update automatically
+```
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.

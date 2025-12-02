@@ -5,289 +5,53 @@
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 
-Personal portfolio and blog for Jeff Williams, a Data Engineer specializing in data pipelines, cloud infrastructure, and analytics. Built with Astro.js for blazing-fast performance.
+Personal portfolio and blog. Built with Astro.js.
 
-## ✨ Features
+**Live site:** [jeffwilliams.dev](https://jeffwilliams.dev)
 
-- 🚀 **Blazing fast performance** - Built with Astro.js for optimal loading speeds
-- 📝 **Full-featured blog** - Support for technical articles with code highlighting
-- 🎨 **Beautiful UI** - Modern, responsive design powered by Tailwind CSS
-- 🌙 **Dark mode support** - Seamless light/dark theme switching
-- 📱 **Fully responsive** - Looks great on all devices from mobile to desktop
-- 🔍 **SEO optimized** - Structured data, meta tags, and optimized for search engines
-- 🏷️ **Tag system** - Categorize blog posts and projects with tags
-- 📊 **Content collection** - Organized content management with Astro's content collections
-- 🖼️ **Project showcase** - Display your work with images, descriptions, and technology tags
+## Tech Stack
 
-## 🛠️ Tech Stack
+- **Astro.js** - Static site generator
+- **React** - Interactive components
+- **Tailwind CSS** - Styling
+- **TypeScript** - Type safety
+- **Vercel** - Deployment
 
-- **[Astro.js](https://astro.build/)** - Static site generator with excellent performance
-- **[React.js](https://reactjs.org/)** - For interactive components
-- **[Tailwind CSS](https://tailwindcss.com/)** - Utility-first CSS framework
-- **[TypeScript](https://www.typescriptlang.org/)** - Type safety and improved developer experience
-- **[MDX](https://mdxjs.com/)** - Markdown with JSX for rich content creation
-- **[Preact](https://preactjs.com/)** - Lightweight alternative to React for UI components
-
-## 📋 Prerequisites
-
-Before you begin, ensure you have the following installed:
-- [Node.js](https://nodejs.org/) (v18 or higher)
-- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
-- [Git](https://git-scm.com/)
-
-## ⚙️ Installation & Setup
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/JeffWilliams2/jeffs-portfolio.git
-   cd jeffs-portfolio
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-4. **Open your browser**
-   Navigate to `http://localhost:3010` to see the site running locally.
-
-## 📁 Project Structure
-
-```
-portfolio/
-├── public/                 # Static assets
-├── src/
-│   ├── components/         # UI components
-│   ├── content/            # Content collections
-│   │   ├── blog/           # Blog posts in MD/MDX format
-│   │   └── projects/       # Project data
-│   ├── layouts/            # Page layouts
-│   ├── lib/                # Utility functions
-│   ├── pages/              # Page routes
-│   └── styles/             # Global styles
-├── astro.config.mjs        # Astro configuration
-├── tailwind.config.cjs     # Tailwind CSS configuration
-├── tsconfig.json           # TypeScript configuration
-└── package.json            # Project dependencies
-```
-
-## 🚀 Usage
-
-### Creating a Blog Post
-
-1. Create a new `.mdx` or `.md` file in `src/content/blog`
-2. Add frontmatter with title, description, date, tags, and authors
-3. Write your content using Markdown and MDX components
-
-```mdx
----
-title: "Your Post Title"
-description: "A brief description of your post"
-date: 2025-04-20
-tags: ["tag1", "tag2", "tag3"]
-authors: ["Your Name", "Co-author (optional)"]
----
-
-# Your Post Title
-
-Write your content here using Markdown.
-
-## Subheading
-
-More content...
-
-```
-
-### Adding a Project
-
-1. Create a new `.md` file in projects
-2. Add project details including name, description, tags, and image path
-
-## 🌙 Dark Mode
-
-The project includes dark mode support using Tailwind CSS and Preact. It detects user preferences and applies the appropriate theme, with an option to toggle between light and dark modes.
-
-## 📊 Data Utilities
-
-The project includes several utility functions in data-utils.ts:
-
-- `getAllPosts()` - Retrieve all blog posts
-- `getRecentPosts(count)` - Get the most recent posts
-- `getAdjacentPosts(currentId)` - Get next and previous posts
-- `getAllTags()` - Get all tags used in posts
-- `getSortedTags()` - Get tags sorted by usage count
-- `getPostsByAuthor(authorId)` - Get all posts by a specific author
-
-## 📊 Database Setup (Likes/Dislikes Feature)
-
-The portfolio includes a post feedback system allowing visitors to like or dislike blog posts. This feature requires a PostgreSQL database to store vote data. This guide explains how to set it up using [Neon.tech](https://neon.tech).
-
-### Setting Up Neon.tech Database
-
-1. **Create a Neon.tech Account**
-   - Go to [Neon.tech](https://neon.tech) and sign up for an account
-   - Neon offers a generous free tier suitable for personal portfolio sites
-
-2. **Create a New Project**
-   - From the Neon dashboard, click "New Project"
-   - Choose a name for your project (e.g., "portfolio")
-   - Select the closest region to your target audience
-   - Click "Create Project"
-
-3. **Set Environment Variables**
-   - Create a `.env` file in your project root (if not already present)
-   - Add your database connection string:
-     ```
-     DATABASE_URL=your_neon_connection_string_here
-     ```
-
-### Database Schema Setup
-
-Run the following SQL queries in the Neon SQL Editor to create the tables for the feedback system:
-
-```sql
-CREATE TABLE post_feedback (
-  id SERIAL PRIMARY KEY,
-  post_id VARCHAR(255) NOT NULL,
-  likes INTEGER DEFAULT 0,
-  dislikes INTEGER DEFAULT 0,
-  CONSTRAINT unique_post_id UNIQUE (post_id)
-);
-
-CREATE TABLE post_likes (
-  id SERIAL PRIMARY KEY,
-  post_id VARCHAR(255) NOT NULL,
-  fingerprint_id VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT unique_like UNIQUE (post_id, fingerprint_id)
-);
-
-CREATE TABLE post_dislikes (
-  id SERIAL PRIMARY KEY,
-  post_id VARCHAR(255) NOT NULL,
-  fingerprint_id VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT unique_dislike UNIQUE (post_id, fingerprint_id)
-);
-
-CREATE INDEX idx_post_feedback_post_id ON post_feedback (post_id);
-CREATE INDEX idx_post_likes_post_id_fingerprint ON post_likes (post_id, fingerprint_id);
-CREATE INDEX idx_post_dislikes_post_id_fingerprint ON post_dislikes (post_id, fingerprint_id);
-```
-
-### How the Feedback System Works
-
-The feedback system consists of three tables:
-- `post_feedback`: Stores aggregate counts of likes and dislikes for each post
-- `post_likes`: Records individual like actions with fingerprint IDs to prevent duplicate votes
-- `post_dislikes`: Records individual dislike actions with fingerprint IDs
-
-### API Implementation
-
-The portfolio includes API endpoints for handling likes and dislikes:
-
-1. **Fetching Post Feedback**
-   - GET request to `/api/like/{postId}` returns current like/dislike counts
-
-2. **Submitting Likes**
-   - POST request to `/api/like/{postId}` with fingerprint ID in the request body
-   - The system checks if the user has already liked/disliked the post
-   - If not, a like is recorded and the count is updated
-
-3. **Submitting Dislikes**
-   - POST request to `/api/dislike/{postId}` works similarly to the like endpoint
-   - Prevents duplicate votes from the same visitor
-
-### Working with the Database
-
-When a new blog post is created:
-- No manual database entry is needed
-- The first like/dislike action will automatically create the entry in `post_feedback`
-
-To reset likes for a post:
-```sql
-DELETE FROM post_likes WHERE post_id = 'your-post-id';
-DELETE FROM post_dislikes WHERE post_id = 'your-post-id';
-UPDATE post_feedback SET likes = 0, dislikes = 0 WHERE post_id = 'your-post-id';
-```
-
-To view post statistics:
-```sql
-SELECT * FROM post_feedback ORDER BY likes DESC;
-```
-
-To find which posts a specific user has interacted with:
-```sql
-SELECT post_id FROM post_likes WHERE fingerprint_id = 'specific-fingerprint-id';
-```
-
-### Troubleshooting
-
-If you encounter issues with the feedback system:
-
-1. **Check Environment Variables**
-   - Ensure your `.env` file contains the correct `DATABASE_URL`
-
-2. **Verify Database Connection**
-   - Add logging to your database connection code to check for errors
-   - Make sure your Neon.tech project is active and not in suspended state
-
-3. **Check for Errors in Console**
-   - The feedback component logs errors that can help diagnose issues
-
-4. **Reset User Vote State**
-   - Users can clear their localStorage to reset their voting state:
-     ```javascript
-     // In browser console
-     localStorage.clear()
-     ```
-
-## 🔄 Development Workflow
-
-### Branch Strategy
-
-- **`main`** - Production branch (auto-deploys to Vercel)
-- **`dev`** - Development branch (for testing changes)
-
-### When you're ready to make edits:
+## Local Development
 
 ```bash
-# Switch to dev branch
-git checkout dev
+# Install dependencies
+npm install
 
-# Make your changes
-# (edit projects, delete blog posts, clean up imports, etc.)
+# Start dev server
+npm run dev
 
-# Commit and push
-git add -A
-git commit -m "Your changes description"
-git push origin dev
-
-# Vercel will create a preview deployment - test it!
-
-# When satisfied, merge to main:
-git checkout main
-git merge dev
-git push origin main
-
-# Your live site will update automatically
+# Build for production
+npm run build
 ```
 
-## 📄 License
+Dev server runs at `http://localhost:3010`
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## Project Structure
 
-## 📧 Contact
+```
+src/
+├── components/     # UI components
+├── content/
+│   ├── blog/       # Blog posts (Markdown)
+│   └── projects/   # Project case studies
+├── layouts/        # Page layouts
+├── lib/            # Utilities
+├── pages/          # Routes
+└── styles/         # Global CSS
+```
 
-**Jeff Williams**  
-Data Engineer | Software Developer
+## License
 
-- 🌐 Website: [jeffwilliams.dev](https://jeffwilliams.dev)
-- 💼 LinkedIn: [linkedin.com/in/jefferywilliams4](https://linkedin.com/in/jefferywilliams4/)
-- 📧 Email: jeffwilliams2030@gmail.com
-- 💻 GitHub: [github.com/JeffWilliams2](https://github.com/JeffWilliams2)
+MIT
+
+## Contact
+
+- Website: [jeffwilliams.dev](https://jeffwilliams.dev)
+- LinkedIn: [linkedin.com/in/jefferywilliams4](https://linkedin.com/in/jefferywilliams4/)
+- Email: jeffwilliams2030@gmail.com

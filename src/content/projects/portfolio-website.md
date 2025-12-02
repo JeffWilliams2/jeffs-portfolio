@@ -21,13 +21,6 @@ Fast, modern portfolio to showcase data engineering projects and technical writi
 
 ## Performance
 
-| Metric | Score |
-|--------|-------|
-| Performance | 100 |
-| SEO | 100 |
-| Accessibility | 95 |
-| Best Practices | 92 |
-
 ![Lighthouse Score](/static/portfolio-site-img.png)
 
 ## Features

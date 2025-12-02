@@ -74,12 +74,12 @@ export const EXPERIENCE: ExperienceItem[] = [
   },
   {
     role: 'Software Engineer',
-    type: 'PermianBytes (Contract)',
+    type: 'PermianBytes',
     period: 'Jan 2024 – Present',
     points: [
       'Building full-stack web applications with Next.js, Node.js, and PostgreSQL',
-      'Developing SaaS MVPs integrating AI capabilities using OpenAI and LangChain',
-      'Implementing CI/CD pipelines and cloud deployments on AWS and Vercel'
+      'Developing SaaS MVPs with authentication, payments (Stripe), and AI integrations',
+      'Delivering contract solutions for clients across various industries'
     ]
   },
   {

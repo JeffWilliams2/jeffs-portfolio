@@ -5,6 +5,7 @@ import '@/styles/typography.css'
 import Footer from '@/components/Footer.astro'
 import Head from '@/components/Head.astro'
 import Navbar from '@/components/react/navbar'
+import { Particles } from '@/components/react/particles'
 import { SITE } from '@/consts'
 import { cn } from '@/lib/utils'
 import Analytics from '@vercel/analytics/astro'
@@ -31,9 +32,10 @@ const {
       (function() {
         try {
           const localStorageTheme = localStorage.getItem('theme');
+          // Default to dark mode if no preference is set
           const isDark = 
             (localStorageTheme === 'dark') || 
-            (!localStorageTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            (!localStorageTheme);
           
           document.documentElement.classList.toggle('dark', isDark);
           localStorage.setItem('theme', isDark ? 'dark' : 'light');
@@ -52,17 +54,21 @@ const {
     <link rel="alternate" type="application/rss+xml" title="RSS Feed" href="/rss.xml" />
   </Head>
   <body>
-    <div class="flex h-fit min-h-screen w-full flex-col gap-y-4 sm:gap-y-6 font-sans">
+    <div class="min-h-screen relative bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
+      <!-- Animated gradient background -->
+      <div class="fixed inset-0 -z-10 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-white via-zinc-50 to-emerald-50/30 dark:from-zinc-950 dark:via-zinc-900 dark:to-emerald-950/20"></div>
+        <div class="absolute top-0 -left-40 w-80 h-80 bg-emerald-200/20 dark:bg-emerald-900/10 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-70 animate-blob"></div>
+        <div class="absolute top-0 -right-40 w-80 h-80 bg-zinc-200/20 dark:bg-zinc-800/10 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-8 left-20 w-80 h-80 bg-emerald-100/20 dark:bg-emerald-900/5 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
+      </div>
+      
+      <!-- Animated particles -->
+      <Particles client:load />
+      
       <Navbar client:load />
-      <main class="flex grow flex-col bg-background mt-16 lg:mt-6" aria-label="Main content" role="main">
-        <div
-          class={cn(
-            'mx-auto flex grow flex-col gap-y-4 sm:gap-y-6 px-3 py-10 sm:py-16 md:py-20 lg:py-24 sm:px-6 lg:px-8',
-            !isWide && 'max-w-5xl'
-          )}
-        >
-          <slot />
-        </div>
+      <main>
+        <slot />
       </main>
       <Footer />
     </div>

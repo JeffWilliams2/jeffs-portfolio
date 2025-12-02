@@ -1,13 +1,8 @@
 ---
-import Link from '@/components/Link.astro'
 import PageHead from '@/components/PageHead.astro'
-import BlogCard from '@/components/react/blog-card'
-import Skills from '@/components/react/skills'
-import { buttonVariants } from '@/components/ui/button'
-import Logo from '@/components/ui/logo'
 import Layout from '@/layouts/Layout.astro'
 import { getRecentPosts } from '@/lib/data-utils'
-import { SITE } from '@/consts'
+import { SITE, EXPERIENCE } from '@/consts'
 
 const blog = await getRecentPosts(3)
 const currentUrl = Astro.url;
@@ -15,117 +10,282 @@ const currentUrl = Astro.url;
 
 <Layout canonicalUrl={currentUrl}>
   <PageHead slot="head" title="Data Engineer" />
-  <section class="flex flex-col gap-y-12 px-4 py-8 sm:px-8 lg:px-16">
-    <div
-      class="flex flex-col items-center text-center sm:flex-row sm:items-start sm:gap-8 sm:text-left"
-    >
-      <div class="relative overflow-hidden rounded-lg sm:shrink-0 sm:overflow-hidden sm:rounded-lg">
-        <Logo
-          className="h-auto w-40 object-cover sm:w-48 md:w-56 lg:w-64 "
-        />
-      </div>
-      <div class="mt-8 sm:mt-0 sm:max-w-xl">
-        <h1
-          class="font-custom text-foreground text-start text-4xl font-extrabold sm:text-5xl"
-        >
-          {SITE.title}
-        </h1>
-        <div class="mt-4 flex items-center gap-2" aria-label="location">
-          <span
-            class="bg-primary text-primary-foreground ring-primary/30 rounded-full px-3 py-1 text-sm font-medium ring-1"
-          >
-            I'm from
-          </span>
-          <span class="flex items-center gap-1">
-            <span class="text-foreground text-sm font-medium"> {SITE.location}</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 64 48"
-              class="h-6 w-6 transition-transform duration-500 hover:rotate-12"
-              aria-hidden="true"
-              role="img"
-              focusable="false"
-              aria-labelledby="title"
-            >
-              <rect width="64" height="48" fill="#b22234"></rect>
-              <path fill="#fff" d="M0 6h64v4H0zm0 12h64v4H0zm0 12h64v4H0zm0 12h64v4H0z"></path>
-              <rect width="28" height="24" fill="#3c3b6e"></rect>
-              <g fill="#fff">
-                <circle cx="3" cy="3" r="2"></circle>
-                <circle cx="9" cy="3" r="2"></circle>
-                <circle cx="15" cy="3" r="2"></circle>
-                <circle cx="21" cy="3" r="2"></circle>
-                <circle cx="3" cy="9" r="2"></circle>
-                <circle cx="9" cy="9" r="2"></circle>
-                <circle cx="15" cy="9" r="2"></circle>
-                <circle cx="21" cy="9" r="2"></circle>
-                <circle cx="3" cy="15" r="2"></circle>
-                <circle cx="9" cy="15" r="2"></circle>
-                <circle cx="15" cy="15" r="2"></circle>
-                <circle cx="21" cy="15" r="2"></circle>
-              </g>
+  
+  <!-- Hero Section -->
+  <section class="max-w-4xl mx-auto px-6 pt-32 pb-24">
+    <!-- Services badges -->
+    <div class="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 backdrop-blur-sm mb-10">
+      <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400">Data Engineering</span>
+      <span class="w-1 h-1 rounded-full bg-emerald-500"></span>
+      <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400">Cloud Infrastructure</span>
+      <span class="w-1 h-1 rounded-full bg-emerald-500"></span>
+      <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400">Full-Stack Development</span>
+    </div>
+    
+    <h1 class="text-4xl md:text-5xl lg:text-6xl font-normal mb-8 leading-tight tracking-tight">
+      <span class="text-zinc-900 dark:text-zinc-100">Building </span>
+      <span class="text-emerald-600 dark:text-emerald-400">scalable systems</span>
+      <br />
+      <span class="text-zinc-900 dark:text-zinc-100">from </span>
+      <span class="text-zinc-600 dark:text-zinc-400">data pipelines</span>
+      <br />
+      <span class="text-zinc-900 dark:text-zinc-100">to </span>
+      <span class="text-zinc-600 dark:text-zinc-400">the cloud</span>
+    </h1>
+    
+    <div class="max-w-2xl">
+      <p class="text-lg text-zinc-600 dark:text-zinc-400 leading-relaxed mb-6">
+        Data engineer specializing in <span class="text-zinc-900 dark:text-zinc-100 font-medium">ETL/ELT pipelines, data infrastructure, and cloud platforms</span>. 
+        Built production data infrastructure processing <span class="text-emerald-600 dark:text-emerald-400 font-medium">multi-modal biomedical data</span> at a genomics startup.
+      </p>
+      <p class="text-base text-zinc-600 dark:text-zinc-400 leading-relaxed mb-4">
+        <span class="text-zinc-900 dark:text-zinc-100 font-medium">MS in Advanced Data Analytics (May 2025)</span> • Finance background bringing domain expertise to technical roles
+      </p>
+    </div>
+    
+    <div class="flex flex-wrap gap-4 mt-10">
+      <a 
+        href="/projects" 
+        class="group inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow-md"
+      >
+        View Projects
+        <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      </a>
+      <a 
+        href="https://github.com/JeffWilliams2" 
+        target="_blank"
+        class="inline-flex items-center gap-2 px-6 py-3 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100 rounded-lg text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:border-zinc-400 dark:hover:border-zinc-600 transition-all"
+      >
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+        GitHub
+      </a>
+    </div>
+  </section>
+
+  <!-- Education Section -->
+  <section class="max-w-3xl mx-auto px-6 py-20 border-t border-zinc-200 dark:border-zinc-800/50">
+    <h2 class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-8">Education</h2>
+    <div class="space-y-6">
+      <div class="group relative rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-lg hover:border-emerald-300 dark:hover:border-emerald-700 hover:-translate-y-1">
+        <div class="flex items-start gap-4">
+          <div class="p-2.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex-shrink-0">
+            <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
             </svg>
-          </span>
+          </div>
+          <div class="flex-1">
+            <div class="flex flex-wrap items-baseline justify-between gap-2 mb-2">
+              <h3 class="font-semibold text-lg text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">MS in Advanced Data Analytics</h3>
+              <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">May 2025</span>
+            </div>
+            <p class="text-zinc-600 dark:text-zinc-400 mb-3">University of North Texas</p>
+            <ul class="text-zinc-600 dark:text-zinc-400 space-y-1.5 text-sm">
+              <li class="flex gap-2 items-start">
+                <span class="text-emerald-500 mt-1">•</span>
+                <span>Machine Learning, Deep Learning, Big Data Systems, Statistical Computing</span>
+              </li>
+              <li class="flex gap-2 items-start">
+                <span class="text-emerald-500 mt-1">•</span>
+                <span>Python, R, SQL, Apache Spark, Hadoop, GCP</span>
+              </li>
+            </ul>
+          </div>
         </div>
-        <p class="text-md text-foreground mt-4 text-start font-sans" title="description" aria-label="description">
-          {SITE.description}
-        </p>
+      </div>
+      <div class="group relative rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-lg hover:border-emerald-300 dark:hover:border-emerald-700 hover:-translate-y-1">
+        <div class="flex items-start gap-4">
+          <div class="p-2.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 flex-shrink-0">
+            <svg class="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="flex flex-wrap items-baseline justify-between gap-2 mb-2">
+              <h3 class="font-semibold text-lg text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">BBA in Finance</h3>
+              <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">2016 – 2021</span>
+            </div>
+            <p class="text-zinc-600 dark:text-zinc-400 mb-3">University of North Texas</p>
+            <ul class="text-zinc-600 dark:text-zinc-400 space-y-1.5 text-sm">
+              <li class="flex gap-2 items-start">
+                <span class="text-emerald-500 mt-1">•</span>
+                <span>Financial Markets, Investments, International Finance, Economics, Derivatives</span>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
+  </section>
 
-    <section class="relative" aria-labelledby="skills-title">
-      <h2
-        id="skills-title"
-        class="font-custom text-foreground text-2xl font-bold"
-        title="skills"
-        aria-label="skills"
-        role="heading"
-      >
-        Skills & Technologies
-      </h2>
-      <p class="text-muted-foreground text-sm" aria-label="skills description">
-        Here are some of the technologies I've been working with:
-      </p>
-      <div>
-        <Skills client:load />
-      </div>
-    </section>
+  <!-- Experience Section -->
+  <section class="max-w-3xl mx-auto px-6 py-20 border-t border-zinc-200 dark:border-zinc-800/50">
+    <h2 class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-10">Experience</h2>
+    <div class="space-y-6">
+      {EXPERIENCE.map((exp) => (
+        <div class="group relative rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm p-6 transition-all duration-300 hover:shadow-lg hover:border-emerald-300 dark:hover:border-emerald-700 hover:-translate-y-1">
+          <div class="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+            <div class="flex flex-wrap items-baseline gap-3">
+              <h3 class="font-semibold text-lg text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">{exp.role}</h3>
+              <span class="text-zinc-400 dark:text-zinc-600">·</span>
+              <span class="text-zinc-600 dark:text-zinc-400">{exp.type}</span>
+            </div>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">{exp.period}</span>
+          </div>
+          <ul class="text-zinc-600 dark:text-zinc-400 space-y-2.5 text-sm leading-relaxed">
+            {exp.points.map((point) => (
+              <li class="flex gap-3 items-start">
+                <svg class="w-5 h-5 text-emerald-500 dark:text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{point}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  </section>
 
-    <section class="flex flex-col gap-y-4" aria-labelledby="latest-posts-title" role="region">
-      <div class="relative" aria-labelledby="latest-posts-title">
-        <h2
-          id="latest-posts-title"
-          class="font-custom text-foreground text-2xl font-bold"
-          title="latest blog posts"
-          aria-label="latest blog posts"
-        >
-          Latest Blog Posts
-        </h2>
-        <p class="text-muted-foreground text-sm" aria-label="blog description">
-          Here are some of my latest blog posts. You can find more on my blog
-          page.
-        </p>
+  <!-- Stack Section -->
+  <section class="max-w-3xl mx-auto px-6 py-20 border-t border-zinc-200 dark:border-zinc-800/50">
+    <h2 class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-8">Tech Stack</h2>
+    <div class="grid sm:grid-cols-2 gap-4 text-sm">
+      <div class="group p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all duration-300">
+        <div class="flex items-center gap-2 mb-2">
+          <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+          </svg>
+          <span class="text-zinc-900 dark:text-zinc-100 font-semibold">Data Engineering</span>
+        </div>
+        <span class="text-zinc-600 dark:text-zinc-400 leading-relaxed">Airflow, dbt, Dagster, Spark, Kafka, pandas, Polars</span>
       </div>
-      <ul class="flex flex-col gap-y-4">
-        {
-          blog.map((post) => (
-            <li>
-              <BlogCard entry={post} />
-            </li>
-          ))
-        }
-      </ul>
-      <div class="flex justify-center" aria-label="see all posts">
-        <Link
-          href="/blog"
-          class={buttonVariants({ variant: 'ghost' }) + ' group'}
-        >
-          See all posts <span
-            class="ml-1.5 transition-transform group-hover:translate-x-1"
-            >&rarr;</span
-          >
-        </Link>
+      <div class="group p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all duration-300">
+        <div class="flex items-center gap-2 mb-2">
+          <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+          </svg>
+          <span class="text-zinc-900 dark:text-zinc-100 font-semibold">Cloud & Infrastructure</span>
+        </div>
+        <span class="text-zinc-600 dark:text-zinc-400 leading-relaxed">AWS, Kubernetes, Docker, Terraform, CI/CD, Linux</span>
       </div>
-    </section>
+      <div class="group p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all duration-300">
+        <div class="flex items-center gap-2 mb-2">
+          <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
+          </svg>
+          <span class="text-zinc-900 dark:text-zinc-100 font-semibold">Databases & Platforms</span>
+        </div>
+        <span class="text-zinc-600 dark:text-zinc-400 leading-relaxed">PostgreSQL, MySQL, MongoDB, Snowflake, BigQuery, S3</span>
+      </div>
+      <div class="group p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all duration-300">
+        <div class="flex items-center gap-2 mb-2">
+          <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+          <span class="text-zinc-900 dark:text-zinc-100 font-semibold">AI/ML & Analytics</span>
+        </div>
+        <span class="text-zinc-600 dark:text-zinc-400 leading-relaxed">LangChain, OpenAI, PyTorch, scikit-learn, Streamlit, Jupyter</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Writing Section -->
+  <section class="max-w-3xl mx-auto px-6 py-20 border-t border-zinc-200 dark:border-zinc-800/50">
+    <h2 class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-8">Recent Writing</h2>
+    <p class="text-zinc-600 dark:text-zinc-400 text-sm mb-8 leading-relaxed">
+      Notes on data engineering and cloud architecture. Video breakdowns coming.
+    </p>
+    <div class="space-y-4">
+      {blog.map((post) => (
+        <a 
+          href={`/blog/${post.id}`}
+          class="group flex items-start justify-between p-4 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5"
+        >
+          <div class="flex-1">
+            <h3 class="text-zinc-900 dark:text-zinc-100 font-medium mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+              {post.data.title}
+            </h3>
+            <p class="text-xs text-zinc-500 dark:text-zinc-500">
+              {new Date(post.data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+            </p>
+          </div>
+          <svg class="w-5 h-5 text-zinc-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all duration-300 flex-shrink-0 mt-1 ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      ))}
+    </div>
+    <a 
+      href="/blog" 
+      class="inline-flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors mt-8"
+    >
+      View all posts
+      <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+      </svg>
+    </a>
+  </section>
+
+  <!-- Certifications Section -->
+  <section class="max-w-3xl mx-auto px-6 py-20 border-t border-zinc-200 dark:border-zinc-800/50">
+    <h2 class="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-8">Certifications</h2>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div class="group p-5 border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-lg hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+        <div class="flex items-start gap-3">
+          <div class="p-2 rounded-md bg-emerald-100 dark:bg-emerald-900/30">
+            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-medium text-zinc-900 dark:text-zinc-100 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">AWS Certified Cloud Practitioner</h3>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">Amazon Web Services • 2025</p>
+          </div>
+        </div>
+      </div>
+      <div class="group p-5 border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-lg hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+        <div class="flex items-start gap-3">
+          <div class="p-2 rounded-md bg-emerald-100 dark:bg-emerald-900/30">
+            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-medium text-zinc-900 dark:text-zinc-100 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Databricks Fundamentals</h3>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">Databricks • 2025</p>
+          </div>
+        </div>
+      </div>
+      <div class="group p-5 border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-lg hover:border-emerald-300 dark:hover:border-emerald-700 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+        <div class="flex items-start gap-3">
+          <div class="p-2 rounded-md bg-emerald-100 dark:bg-emerald-900/30">
+            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-medium text-zinc-900 dark:text-zinc-100 mb-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Securities Industry Essentials (SIE)</h3>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">FINRA • 2022</p>
+          </div>
+        </div>
+      </div>
+      <div class="group p-5 border border-zinc-200 dark:border-zinc-800 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-lg hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-md transition-all duration-300 hover:-translate-y-0.5">
+        <div class="flex items-start gap-3">
+          <div class="p-2 rounded-md bg-zinc-100 dark:bg-zinc-800/50">
+            <svg class="w-5 h-5 text-zinc-500 dark:text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-medium text-zinc-900 dark:text-zinc-100 mb-1">AWS Solutions Architect</h3>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">Amazon Web Services • In Progress</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 </Layout>

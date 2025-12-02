@@ -1,51 +1,63 @@
 ---
-import Link from '@/components/Link.astro'
-import { buttonVariants } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { Icon } from 'astro-icon/components'
-
 const { prevPost, nextPost } = Astro.props
 ---
 
-<nav class="col-start-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
-  <Link
-    href={prevPost ? `/blog/${prevPost.id}` : '#'}
-    class={cn(
-      buttonVariants({ variant: 'outline' }),
-      'rounded-xl group flex items-center justify-start size-full',
-      !prevPost && 'pointer-events-none opacity-50 cursor-not-allowed'
-    )}
-    aria-disabled={!prevPost}
-  >
-    <Icon
-      name="lucide:arrow-left"
-      class="mr-2 size-4 transition-transform group-hover:-translate-x-1"
-    />
-    <div class="flex flex-col items-start overflow-hidden text-wrap">
-      <span class="text-muted-foreground text-left text-xs">Previous Post</span>
-      <span class="w-full text-left text-sm text-ellipsis">
-        {prevPost?.data.title || 'No previous post!'}
-      </span>
+<nav class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  {prevPost ? (
+    <a
+      href={`/blog/${prevPost.id}`}
+      class="group flex items-center gap-3 p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+    >
+      <svg class="w-5 h-5 text-zinc-400 dark:text-zinc-600 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+      </svg>
+      <div class="flex flex-col items-start text-left">
+        <span class="text-xs text-zinc-500 mb-1">Previous</span>
+        <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+          {prevPost.data.title}
+        </span>
+      </div>
+    </a>
+  ) : (
+    <div class="opacity-50 cursor-not-allowed">
+      <div class="flex items-center gap-3 p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg">
+        <svg class="w-5 h-5 text-zinc-400 dark:text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+        </svg>
+        <div class="flex flex-col items-start text-left">
+          <span class="text-xs text-zinc-500 mb-1">Previous</span>
+          <span class="text-sm text-zinc-400">No previous post</span>
+        </div>
+      </div>
     </div>
-  </Link>
-  <Link
-    href={nextPost ? `/blog/${nextPost.id}` : '#'}
-    class={cn(
-      buttonVariants({ variant: 'outline' }),
-      'rounded-xl group flex items-center justify-end size-full',
-      !nextPost && 'pointer-events-none opacity-50 cursor-not-allowed'
-    )}
-    aria-disabled={!nextPost}
-  >
-    <div class="flex flex-col items-end overflow-hidden text-wrap">
-      <span class="text-muted-foreground text-right text-xs">Next Post</span>
-      <span class="w-full text-right text-sm text-ellipsis">
-        {nextPost?.data.title || 'No next post!'}
-      </span>
+  )}
+  
+  {nextPost ? (
+    <a
+      href={`/blog/${nextPost.id}`}
+      class="group flex items-center justify-end gap-3 p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+    >
+      <div class="flex flex-col items-end text-right">
+        <span class="text-xs text-zinc-500 mb-1">Next</span>
+        <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+          {nextPost.data.title}
+        </span>
+      </div>
+      <svg class="w-5 h-5 text-zinc-400 dark:text-zinc-600 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+      </svg>
+    </a>
+  ) : (
+    <div class="opacity-50 cursor-not-allowed">
+      <div class="flex items-center justify-end gap-3 p-4 border border-zinc-200 dark:border-zinc-800 rounded-lg">
+        <div class="flex flex-col items-end text-right">
+          <span class="text-xs text-zinc-500 mb-1">Next</span>
+          <span class="text-sm text-zinc-400">No next post</span>
+        </div>
+        <svg class="w-5 h-5 text-zinc-400 dark:text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      </div>
     </div>
-    <Icon
-      name="lucide:arrow-right"
-      class="ml-2 size-4 transition-transform group-hover:translate-x-1"
-    />
-  </Link>
+  )}
 </nav>

@@ -3,8 +3,8 @@ import type { IconMap, SocialLink, Site } from '@/types'
 export const SITE: Site = {
   title: 'Jeff Williams',
   description:
-    "Data Engineer & Software Developer | M.S. Advanced Data Analytics (May 2025) | Building end-to-end data solutions from infrastructure to analytics across diverse industries | Experience spans production platforms, freelance projects, and internal enterprise deployments | Tech stack: Python, Airflow, dbt, Kubernetes, AWS, React, PostgreSQL, and modern data tools",
-  href: 'https://jeffs-portfolio-opal.vercel.app',
+    "Data Engineer specializing in ETL/ELT pipelines, cloud infrastructure, and data platforms. MS in Advanced Data Analytics. Building scalable data systems from pipelines to production.",
+  href: 'https://jeffwilliams.dev',
   author: 'Jeff Williams',
   locale: 'en-US',
   location: 'Texas, USA',
@@ -15,6 +15,10 @@ export const NAV_LINKS: SocialLink[] = [
   {
     href: '/',
     label: 'home',
+  },
+  {
+    href: '/about',
+    label: 'about',
   },
   {
     href: '/projects',
@@ -49,6 +53,88 @@ export const ICON_MAP: IconMap = {
   Email: 'lucide:mail',
 }
 
+export interface ExperienceItem {
+  role: string
+  type: string
+  period: string
+  points: string[]
+}
+
+export const EXPERIENCE: ExperienceItem[] = [
+  {
+    role: 'Data Engineer (Internship)',
+    type: 'Genomics Startup',
+    period: 'May 2025 – Sept 2025',
+    points: [
+      'Built production ETL/ELT pipelines processing biomedical and EMR data from various sources',
+      'Architected data lakehouse utilizing medallion architecture with data quality validation',
+      'Deployed Kubernetes/Docker infrastructure supporting microservices and CI/CD pipelines',
+      'Led end-to-end data projects from technical design to executive presentations'
+    ]
+  },
+  {
+    role: 'Banking',
+    type: 'JPMorgan Chase & Co.',
+    period: 'Mar 2024 – Jul 2024',
+    points: [
+      'Processed financial transactions with 100% accuracy',
+      'Identified patterns in customer transaction data to recommend products and streamline service delivery'
+    ]
+  },
+  {
+    role: 'Finance Representative',
+    type: 'Charles Schwab',
+    period: 'Jan 2022 – Dec 2022',
+    points: [
+      'Obtained Series 7 and SIE licenses for securities trading',
+      'Communication and client relations in financial services',
+      'Developed deep understanding of financial and banking operations'
+    ]
+  }
+]
+
+export const CERTIFICATIONS = [
+  'AWS Certified Cloud Practitioner (2024)',
+  'Databricks Fundamentals (2025)',
+  'Generative AI Fundamentals — Databricks (2025)',
+  'LangChain for LLM Development — DeepLearning.AI (2025)',
+  'Dagster Essentials (2025)'
+]
+
+export interface TimelineItem {
+  year: string
+  event: string
+  detail: string
+}
+
+export const TIMELINE: TimelineItem[] = [
+  {
+    year: '2025',
+    event: 'MS Advanced Data Analytics, UNT',
+    detail: 'Machine Learning, Deep Learning, Big Data Systems, Statistical Computing'
+  },
+  {
+    year: '2025',
+    event: 'Data Engineer — Genomics Startup',
+    detail: 'ETL/ELT pipelines · Medallion architecture · Kubernetes/Docker · Python, Airflow, Dagster'
+  },
+  {
+    year: '2024',
+    event: 'Banking — JPMorgan Chase & Co.',
+    detail: 'Transaction processing, pattern identification, financial operations'
+  },
+  {
+    year: '2022',
+    event: 'Finance Representative — Charles Schwab',
+    detail: 'Series 7, SIE · Client relations, financial services'
+  },
+  {
+    year: '2021',
+    event: 'BBA Finance, UNT',
+    detail: 'Financial Markets, Investments, Economics, Derivatives'
+  }
+]
+
 export interface Category {
   text: string
   logo: string
@@ -56,77 +142,55 @@ export interface Category {
 
 export type Technologies = {
   'Data Engineering': Category[];
-  'Data Science': Category[];
   'Cloud & Infrastructure': Category[];
-  'Data Platforms': Category[];
-  'AI/ML Tools': Category[];
-  'Other': Category[];
+  'Databases & Platforms': Category[];
+  'AI/ML': Category[];
   'Web Development': Category[];
-  'Databases': Category[];
 };
 
 export const technologies: Technologies = {
   'Data Engineering': [
-    { text: 'Python', logo: 'mdi:python' },
-    { text: 'R', logo: 'mdi:r' },
-    { text: 'ETL/ELT Pipelines', logo: 'mdi:transfer' },
+    { text: 'Apache Airflow', logo: 'mdi:airflow' },
+    { text: 'dbt', logo: 'mdi:dbt' },
+    { text: 'Dagster', logo: 'mdi:transfer' },
     { text: 'Apache Spark', logo: 'mdi:spark' },
-    { text: 'Airflow', logo: 'mdi:airflow' },
-    { text: 'dbt-core', logo: 'mdi:dbt' },
-    { text: 'Polars', logo: 'mdi:polars' },
-  ],
-  'Data Science': [
     { text: 'pandas', logo: 'simple-icons:pandas' },
-    { text: 'scikit-learn', logo: 'simple-icons:python' },
-    { text: 'numpy', logo: 'simple-icons:numpy' },
-    { text: 'matplotlib', logo: 'simple-icons:python' },
-    { text: 'PyTorch', logo: 'simple-icons:pytorch' },
-    { text: 'Jupyter Notebook', logo: 'simple-icons:jupyter' },
+    { text: 'NumPy', logo: 'simple-icons:numpy' },
     { text: 'DuckDB', logo: 'simple-icons:duckdb' },
+    { text: 'ETL/ELT', logo: 'mdi:transfer' },
   ],
   'Cloud & Infrastructure': [
-    { text: 'Docker', logo: 'mdi:docker' },
+    { text: 'AWS', logo: 'mdi:aws' },
+    { text: 'GCP', logo: 'mdi:google-cloud' },
     { text: 'Kubernetes', logo: 'mdi:kubernetes' },
-    { text: 'AWS (Lambda, Glue)', logo: 'mdi:aws' },
-    { text: 'MinIO', logo: 'mdi:minio' },
-    { text: 'Linux', logo: 'mdi:linux' },
-    { text: 'Git', logo: 'mdi:git' },
+    { text: 'Docker', logo: 'mdi:docker' },
     { text: 'CI/CD', logo: 'mdi:cicd' },
+    { text: 'Git', logo: 'mdi:git' },
+    { text: 'Linux', logo: 'mdi:linux' },
   ],
-  'Data Platforms': [
+  'Databases & Platforms': [
     { text: 'PostgreSQL', logo: 'mdi:postgresql' },
     { text: 'MySQL', logo: 'simple-icons:mysql' },
-    { text: 'Data Lakes', logo: 'mdi:datalake' },
-    { text: 'Medallion Architecture', logo: 'mdi:medallion' },
     { text: 'Snowflake', logo: 'mdi:snowflake' },
     { text: 'BigQuery', logo: 'mdi:bigquery' },
+    { text: 'Databricks', logo: 'simple-icons:databricks' },
+    { text: 'Redshift', logo: 'mdi:aws' },
+    { text: 'MongoDB', logo: 'simple-icons:mongodb' },
   ],
-  'AI/ML Tools': [
-    { text: 'Vector Databases (Qdrant, Weaviate, pgvector)', logo: 'mdi:qdrant' },
-    { text: 'LlamaIndex', logo: 'mdi:llamaindex' },
+  'AI/ML': [
+    { text: 'Python', logo: 'mdi:python' },
     { text: 'LangChain', logo: 'mdi:langchain' },
-  ],
-  'Other': [
-    { text: 'REST APIs', logo: 'mdi:rest' },
-    { text: 'Tableau', logo: 'mdi:tableau' },
-    { text: 'Jira', logo: 'mdi:jira' },
-    { text: 'VS Code', logo: 'mdi:visual-studio-code' },
-    { text: 'Parquet', logo: 'mdi:parquet' },
-    { text: 'JSON', logo: 'mdi:json' },
-    { text: 'Figma', logo: 'mdi:figma' },
-    { text: 'Streamlit', logo: 'mdi:streamlit' },
+    { text: 'OpenAI APIs', logo: 'simple-icons:openai' },
+    { text: 'scikit-learn', logo: 'simple-icons:scikitlearn' },
+    { text: 'Tableau', logo: 'simple-icons:tableau' },
+    { text: 'Streamlit', logo: 'simple-icons:streamlit' },
   ],
   'Web Development': [
-    { text: 'HTML', logo: 'mdi:language-html5' },
+    { text: 'TypeScript', logo: 'mdi:language-typescript' },
     { text: 'JavaScript', logo: 'mdi:language-javascript' },
-    { text: 'CSS', logo: 'mdi:language-css3' },
-    { text: 'PHP', logo: 'mdi:language-php' },
-    { text: 'Astro', logo: 'simple-icons:astro' },
-    { text: 'Tailwind CSS', logo: 'mdi:tailwind' },
-  ],
-  'Databases': [
-    { text: 'PostgreSQL', logo: 'mdi:postgresql' },
-    { text: 'MySQL', logo: 'simple-icons:mysql' },
-    { text: 'MongoDB', logo: 'simple-icons:mongodb' },
+    { text: 'React', logo: 'simple-icons:react' },
+    { text: 'Next.js', logo: 'simple-icons:nextdotjs' },
+    { text: 'Node.js', logo: 'simple-icons:nodedotjs' },
+    { text: 'SQL', logo: 'mdi:database' },
   ],
 }

@@ -17,7 +17,7 @@ const optimizedDescription = descTrimmed.length > 155
   : descTrimmed
 
 // Create proper page title, clamp to ~60 chars
-const rawTitle = title === SITE.title ? SITE.title : `${title} | ${SITE.title}`
+const rawTitle = title === SITE.title ? SITE.title : `Jeff Williams | ${title}`
 const pageTitle = rawTitle.length > 60 ? rawTitle.slice(0, 57) + '...' : rawTitle
 ---
 

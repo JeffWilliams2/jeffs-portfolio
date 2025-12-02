@@ -1,146 +1,49 @@
 ---
 name: 'Full-Stack SaaS Application'
-description: 'Multi-tenant SaaS platform with Next.js, Supabase, and Stripe featuring AI-powered document processing, user authentication, subscription management, and PostgreSQL backend with row-level security.'
-tags: ['nextjs', 'react', 'postgresql', 'supabase', 'stripe', 'openai', 'langchain', 'typescript']
+description: 'Multi-tenant web application with Next.js, Supabase, and Stripe. Features AI document processing, authentication, and subscription management.'
+tags: ['nextjs', 'react', 'postgresql', 'supabase', 'stripe']
 link: 'https://github.com/JeffWilliams2'
 startDate: '2024-01-01'
-endDate: '2025-11-01'
 ---
 
-# Full-Stack SaaS Application
+## What I'm Building
 
-## Overview
+A production SaaS application to learn full-stack development end-to-end—from authentication to payments to deployment.
 
-Production-ready multi-tenant SaaS application built with modern web technologies, featuring AI-powered document processing, secure authentication, and subscription management. Designed for scalability and security with row-level security in PostgreSQL.
+## Core Features
 
-## Key Features
+**Authentication**: Supabase Auth with email/password and OAuth. JWT-based sessions with automatic refresh.
 
-### 🔐 Authentication & Security
-- Secure user authentication with Supabase Auth
-- Row-level security (RLS) policies in PostgreSQL
-- Multi-tenant architecture with data isolation
-- JWT-based session management
+**Multi-Tenancy**: Row-level security (RLS) in PostgreSQL ensures users only see their own data. Each tenant is completely isolated.
 
-### 💳 Subscription Management
-- Stripe integration for payment processing
-- Subscription tiers and billing management
-- Webhook handling for payment events
-- Customer portal for subscription management
-
-### 🤖 AI-Powered Features
-- Document processing with OpenAI APIs
-- Intelligent automation using LangChain
-- Natural language processing capabilities
-- Automated content generation
-
-### 💾 Database & Backend
-- PostgreSQL with Supabase backend
-- Row-level security for data isolation
-- Real-time subscriptions
-- Optimized queries and indexing
-
-## Technical Stack
-
-**Frontend:**
-- Next.js 14+ (App Router)
-- React 18+
-- TypeScript
-- Tailwind CSS
-- Responsive design
-
-**Backend:**
-- Supabase (PostgreSQL + Auth + Storage)
-- Node.js serverless functions
-- REST APIs
-- Webhook handling
-
-**Integrations:**
-- Stripe for payments
-- OpenAI API for AI features
-- LangChain for document processing
-
-**DevOps:**
-- Vercel deployment
-- CI/CD pipelines
-- Environment management
-- Automated testing
-
-## Architecture Highlights
-
-### Multi-Tenant Design
 ```sql
--- Row-level security example
 CREATE POLICY tenant_isolation ON documents
   USING (tenant_id = auth.uid());
 ```
 
-### AI Document Processing Pipeline
-1. Document upload to Supabase Storage
-2. LangChain processing with OpenAI
-3. Structured data extraction
-4. Database storage with RLS
-5. Real-time updates to frontend
+**Payments**: Stripe integration for subscriptions. Webhook handling for payment events, subscription changes, and failed payments.
 
-### Subscription Flow
-1. User selects subscription tier
-2. Stripe Checkout session creation
-3. Payment processing
-4. Webhook event handling
-5. Database updates
-6. User access level changes
+**AI Features**: Document processing with OpenAI APIs. Using LangChain for structured data extraction from uploaded files.
 
-## Key Accomplishments
+## Technical Stack
 
-- ✅ Built scalable multi-tenant architecture
-- ✅ Implemented secure payment processing
-- ✅ Integrated AI capabilities for document automation
-- ✅ Deployed CI/CD pipeline on Vercel
-- ✅ Achieved < 100ms page load times
-- ✅ Implemented comprehensive error handling
+**Frontend**: Next.js 14 with App Router, TypeScript, Tailwind CSS. Server components for initial load, client components for interactivity.
 
-## Development Practices
+**Backend**: Supabase for database (PostgreSQL), auth, and file storage. Edge functions for serverless API routes.
 
-- **Microservices Architecture**: Modular API design
-- **API Design**: RESTful endpoints with TypeScript
-- **Database Patterns**: Optimized queries and indexing
-- **Security**: OWASP best practices
-- **Testing**: Unit and integration tests
-- **Code Quality**: ESLint, Prettier, TypeScript strict mode
+**Infrastructure**: Deployed on Vercel with automatic previews for PRs. Environment-based configuration for dev/staging/prod.
 
-## Performance Optimizations
+## Key Learnings
 
-- Server-side rendering (SSR) with Next.js
-- Image optimization with Next.js Image
-- Database query optimization
-- Caching strategies
-- Code splitting and lazy loading
+- Row-level security is powerful but requires careful policy design
+- Stripe webhooks need idempotency handling
+- Server components reduce client-side JavaScript significantly
+- TypeScript catches bugs before they reach production
 
-## Future Enhancements
+## Current Status
 
-- [ ] Advanced analytics dashboard
-- [ ] Team collaboration features
-- [ ] API rate limiting
-- [ ] Enhanced AI capabilities
-- [ ] Mobile app development
+Actively developing. Core auth, database, and payment flows working. Building out AI features and refining the UI.
 
-## Technologies Used
+## Key Technologies
 
-```
-Frontend:     Next.js, React, TypeScript, Tailwind CSS
-Backend:      Supabase, PostgreSQL, Node.js
-Auth:         Supabase Auth, JWT
-Payments:     Stripe API, Webhooks
-AI/ML:        OpenAI API, LangChain
-Deployment:   Vercel, CI/CD
-Tools:        Git, VS Code, Postman
-```
-
-## Project Impact
-
-This project demonstrates:
-- Full-stack development capabilities
-- Cloud-native architecture design
-- AI integration expertise
-- Payment processing implementation
-- Security-first approach
-- Production deployment experience
+Next.js, React, TypeScript, PostgreSQL, Supabase, Stripe, OpenAI, Vercel

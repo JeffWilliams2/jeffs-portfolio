@@ -1,236 +1,55 @@
 ---
-name: 'Production Data Platform - General Genomics'
-description: 'Kubernetes-based data infrastructure processing 20TB+ of biomedical data with 99.5% uptime. Features automated Airflow orchestration, medallion architecture data lakehouse, and comprehensive monitoring with Prometheus/Grafana.'
-tags: ['kubernetes', 'airflow', 'dbt', 'docker', 'postgresql', 'prometheus', 'grafana', 'python', 'data-engineering']
+name: 'Production Data Platform'
+description: 'Built production data platform at a genomics startup—multi-source ingestion framework, Kubernetes infrastructure, data governance, and ML-ready pipelines processing 20TB+ data.'
+tags: ['kubernetes', 'airflow', 'dbt', 'python', 'openmetadata']
 link: 'https://github.com/JeffWilliams2'
 startDate: '2025-05-01'
 endDate: '2025-09-01'
 ---
 
-# Production Data Platform - General Genomics Inc.
+## The Challenge
 
-## Overview
+A genomics startup needed a production data platform to ingest, process, and govern biomedical data from 15+ external sources—OpenNeuro repositories, NIfTI brain scans, DICOM imaging. The existing process was manual, taking weeks to onboard new datasets.
 
-Architected and deployed production-grade Kubernetes data platform processing 20TB+ of biomedical data with 99.5% uptime as sole data engineer with full ownership of infrastructure lifecycle. Reduced data processing time from weeks to 2 days while enabling real-time analytics for research teams.
+## What I Built
 
-## Key Achievements
+### Multi-Source Data Ingestion Framework
+- Architected ingestion framework integrating **15+ external repositories** (OpenNeuro, medical imaging datasets)
+- Built modular ETL pipelines in Airflow for automated download, validation, and transformation of medical imaging data
+- Standardized heterogeneous formats (NIfTI, DICOM) to Parquet for unified analytics consumption
+- Designed reusable data cleaning framework enabling rapid pipeline development for new sources
 
-### ⚡ Performance & Scale
-- **20TB+** biomedical data processed with **99.5% uptime**
-- **95% reduction** in data onboarding time (weeks → 2 days)
-- **Real-time analytics** enabled for research teams
-- **60% faster** incident response with monitoring
-
-### 🏗️ Infrastructure
-- Production-grade **Kubernetes** cluster deployment
-- **Automated orchestration** with Apache Airflow DAGs
-- **Medallion architecture** data lakehouse (Bronze/Silver/Gold layers)
-- **Comprehensive monitoring** with 25+ custom KPI dashboards
-
-## Technical Architecture
-
-### Data Pipeline Architecture
-
-```
-┌─────────────────────────────────────────────────┐
-│           Multi-Source Data Ingestion           │
-│   (NIfTI, DICOM, Medical Imaging Formats)      │
-└─────────────────┬───────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────────┐
-│         Apache Airflow Orchestration            │
-│    (Automated DAGs, Event-Driven Processing)    │
-└─────────────────┬───────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────────┐
-│         Medallion Architecture Lakehouse        │
-│  Bronze Layer → Silver Layer → Gold Layer       │
-│  (dbt transformations + data quality checks)    │
-└─────────────────┬───────────────────────────────┘
-                  │
-                  ▼
-┌─────────────────────────────────────────────────┐
-│       Monitoring & Observability Layer          │
-│    (Prometheus/Grafana with 25+ KPIs)          │
-└─────────────────────────────────────────────────┘
-```
-
-### Kubernetes Infrastructure
-
-**Components:**
-- Containerized data processing workflows
-- Horizontal pod autoscaling
-- Persistent volume claims for data storage
-- Network policies for security
-- Resource quotas and limits
-
-**Key Features:**
-- High availability setup
-- Self-healing capabilities
-- Rolling updates with zero downtime
-- Resource optimization
-
-## Data Engineering Highlights
-
-### 1. Multi-Source Data Ingestion
-- **Challenge**: Integrate datasets from 15+ external repositories
-- **Solution**: Built automated ingestion framework
-- **Impact**: Reduced onboarding from weeks to 2 days
-
-**Data Formats Processed:**
-- NIfTI (neuroimaging)
-- DICOM (medical imaging)
-- Parquet (analytics)
-- JSON (metadata)
-
-### 2. Orchestration with Apache Airflow
-- **90+ custom DAGs** for data workflows
-- **Event-driven processing** with automated triggers
-- **Dependency management** between pipelines
-- **SLA monitoring** and alerting
-
-**DAG Examples:**
-```python
-# Medical data ingestion DAG
-- Validate source data
-- Transform to standardized format
-- Quality checks (Great Expectations)
-- Load to data lakehouse
-- Update metadata catalog
-```
-
-### 3. Medallion Architecture Implementation
-
-**Bronze Layer (Raw Data)**
-- Ingestion from multiple sources
-- Data validation and schema enforcement
-- Audit logging
-
-**Silver Layer (Cleaned Data)**
-- dbt transformations
-- Data quality validation
-- Standardization and normalization
-
-**Gold Layer (Analytics-Ready)**
-- Aggregated metrics
-- Business logic applied
-- Optimized for queries
-
-### 4. Monitoring & Observability
-
-**Prometheus/Grafana Stack:**
-- 25+ custom KPI dashboards
-- Real-time alerting
-- Performance metrics tracking
-- Resource utilization monitoring
-
-**Key Metrics Tracked:**
-- Pipeline execution times
-- Data quality scores
-- System resource usage
-- Error rates and types
-- Data freshness
-
-## Technical Implementation
-
-### Technologies Used
-
-**Orchestration:**
-- Apache Airflow (workflow automation)
-- Kubernetes (container orchestration)
-- Docker (containerization)
-
-**Data Processing:**
-- Python (data pipelines)
-- PostgreSQL (metadata storage)
-- dbt (data transformations)
-- Parquet (columnar storage)
-
-**Monitoring:**
-- Prometheus (metrics collection)
-- Grafana (visualization)
-- Custom KPI dashboards
-
-**Infrastructure:**
-- Kubernetes clusters
-- Docker containers
-- Persistent storage
-- Network policies
-
-## Leadership & Decision Making
-
-As **sole data engineer** with **full infrastructure ownership**:
-
-✅ Presented technical architecture decisions to executive leadership  
-✅ Drove adoption of cloud-native data practices  
-✅ Designed scaling strategies for growing data volumes  
-✅ Made critical decisions on technology stack  
-✅ Owned end-to-end infrastructure lifecycle  
-
-## Data Quality & Governance
-
-### Quality Validation
-- Comprehensive lineage tracking
-- Automated data quality tests
-- Schema validation
-- Referential integrity checks
+### Platform Infrastructure
+- Deployed production Apache Airflow on **Kubernetes cluster** (isolated namespace) for scalable pipeline execution
+- Configured persistent storage, network policies, RBAC, and horizontal pod autoscaling
+- Integrated dbt with Airflow for version-controlled SQL transformations in medallion architecture
 
 ### Data Governance
-- Metadata management
-- Data catalog maintenance
-- Access control policies
-- Audit logging
+- Stood up **OpenMetadata** data catalog integrated with PostgreSQL and Elasticsearch
+- Implemented metadata lineage tracking across **1,000+ datasets**
+- Configured monitoring, alerting, and access controls for multi-tenant environment
 
-## Impact on Research Teams
+### ML Data Preparation
+- Built preprocessing pipeline for medical imaging datasets preparing **10,000+ brain MRI scans** for deep learning
+- Performed EDA on genomics datasets to identify patterns and data quality issues
+- Developed automated feature engineering workflows integrating imaging metadata with clinical variables
 
-### Before
-- ❌ Weeks to onboard new datasets
-- ❌ Manual data processing
-- ❌ Limited visibility into data quality
-- ❌ Reactive incident response
+## Technical Decisions
 
-### After
-- ✅ 2-day dataset onboarding
-- ✅ Automated pipelines with monitoring
-- ✅ Real-time data quality metrics
-- ✅ Proactive alerting (60% faster response)
+**Why Kubernetes?** Self-healing, auto-scaling, and zero-downtime deployments. Critical for sensitive medical data.
 
-## Key Learnings
+**Why OpenMetadata?** Enterprise-grade data governance with lineage tracking. Researchers could discover datasets and understand data flow.
 
-1. **Scalability**: Designed for 10x data growth
-2. **Reliability**: 99.5% uptime through monitoring
-3. **Automation**: Reduced manual work by 95%
-4. **Observability**: Critical for production systems
-5. **Architecture**: Medallion pattern for data quality
+**Why Parquet?** Columnar format with schema evolution. Efficient for analytics queries and ML feature extraction.
 
-## Future Enhancements
+## Results
 
-- Machine learning pipeline integration
-- Advanced data lineage visualization
-- Multi-cloud deployment strategy
-- Enhanced security controls
-- Real-time streaming capabilities
+- Reduced dataset onboarding from **weeks to days**
+- Achieved **99.5% platform uptime**
+- Tracked lineage across **1,000+ datasets**
+- Prepared **10,000+ scans** for ML training
+- Built **25+ monitoring dashboards**
 
-## Technologies & Skills
+## Key Technologies
 
-```
-Orchestration:    Apache Airflow, Kubernetes, Docker
-Languages:        Python, SQL
-Data Storage:     PostgreSQL, Parquet, Data Lakes
-Transformations:  dbt, Python, SQL
-Monitoring:       Prometheus, Grafana
-Infrastructure:   Kubernetes, Docker, Linux
-Cloud:            Cloud-native practices
-```
-
-## Project Significance
-
-This project demonstrates:
-- Production infrastructure design at scale
-- End-to-end data platform ownership
-- Cloud-native architecture expertise
-- Healthcare/biomedical domain knowledge
-- Leadership and technical decision-making
-- Performance optimization and monitoring
+Python, Apache Airflow, Kubernetes, Docker, dbt, OpenMetadata, PostgreSQL, Elasticsearch, MinIO, Prometheus, Grafana, PyTorch, Parquet

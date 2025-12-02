@@ -42,7 +42,7 @@ const structuredData = {
 const canonicalUrl = new URL(`/blog/${post.id}/`, Astro.site).toString();
 ---
 
-<Layout canonicalUrl={canonicalUrl} isWide={true}>
+<Layout canonicalUrl={canonicalUrl}>
   <PostHead slot="head" post={post} />
   
   <script
@@ -50,104 +50,125 @@ const canonicalUrl = new URL(`/blog/${post.id}/`, Astro.site).toString();
     is:inline
     set:html={JSON.stringify(structuredData)}
   />
-  <section
-    class="grid grid-cols-[minmax(0px,1fr)_min(calc(var(--breakpoint-lg)-2rem),100%)_minmax(0px,1fr)] gap-y-6"
-  >
-    <div class="col-start-2">
-      <Breadcrumbs
-        items={[
-          { href: '/blog', label: 'Blog', icon: 'lucide:archive' },
-          { label: post.data.title, icon: 'lucide:file-text' },
-        ]}
-      />
-    </div>
-    <section class="col-start-2 flex flex-col gap-y-6 text-start">
-      <div class="flex flex-col">
-        <h1
-          class="mb-2 text-3xl leading-tight font-medium text-pretty sm:text-5xl"
-        >
-          {post.data.title}
-        </h1>
+  
+  <div class="max-w-4xl mx-auto px-6 py-12">
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm text-zinc-500 mb-8">
+      <a href="/" class="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">Home</a>
+      <span>›</span>
+      <a href="/blog" class="hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">Blog</a>
+      <span>›</span>
+      <span class="text-zinc-900 dark:text-zinc-100">{post.data.title}</span>
+    </nav>
 
-        <div class="flex flex-wrap justify-start gap-2">
-          {
-            post.data.tags && post.data.tags.length > 0 ? (
-              post.data.tags.map((tag) => (
-                <a
-                  href={`/tags/${tag}`}
-                  class={badgeVariants({ variant: 'secondary' })}
-                >
-                  <Icon name="lucide:hash" class="size-3" />
-                  {tag}
-                </a>
-              ))
-            ) : (
-              <span class="text-muted-foreground text-sm">
-                No tags available
-              </span>
-            )
-          }
-        </div>
+    <!-- Article Header -->
+    <header class="mb-12">
+      <h1 class="text-4xl md:text-5xl font-normal mb-6 leading-tight text-zinc-900 dark:text-zinc-100">
+        {post.data.title}
+      </h1>
+
+      <div class="flex flex-wrap items-center gap-2 mb-6">
+        {post.data.tags && post.data.tags.length > 0 && post.data.tags.map((tag) => (
+          <a
+            href={`/tags/${tag}`}
+            class="inline-flex items-center px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 text-xs font-medium border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors capitalize"
+          >
+            #{tag}
+          </a>
+        ))}
       </div>
-    </section>
 
-    <div
-      class="text-muted-foreground col-start-2 flex flex-wrap items-center justify-center gap-2 text-sm"
-    >
-      <div class="flex items-center gap-2">
-        <span>{formatDate(post.data.date)}</span>
-        <Separator orientation="vertical" className="h-4!" />
+      <div class="flex items-center gap-3 text-sm text-zinc-600 dark:text-zinc-400">
+        <time datetime={post.data.date.toISOString()}>
+          {formatDate(post.data.date)}
+        </time>
+        <span>·</span>
         <span>{readingTime(post.body!)}</span>
-        <Separator orientation="vertical" className="h-4!" />
+        <span>·</span>
         <span>By Jeff Williams</span>
       </div>
-    </div>
+    </header>
 
-    {headings.length > 0 && <TableOfContents headings={headings} />}
+    <!-- Table of Contents -->
+    {headings.length > 0 && (
+      <aside class="mb-12 p-6 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
+        <h2 class="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-4 uppercase tracking-wider">
+          Table of Contents
+        </h2>
+        <TableOfContents headings={headings} />
+      </aside>
+    )}
 
-    <article class="prose col-start-2 max-w-none" aria-label="Blog post">
+    <!-- Article Content -->
+    <article class="prose prose-zinc dark:prose-invert prose-lg prose-headings:font-medium prose-headings:tracking-tight prose-a:text-emerald-600 dark:prose-a:text-emerald-400 prose-a:no-underline hover:prose-a:underline prose-code:text-emerald-600 dark:prose-code:text-emerald-400 prose-code:bg-zinc-100 dark:prose-code:bg-zinc-900 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-pre:bg-zinc-900 dark:prose-pre:bg-zinc-950 prose-pre:border prose-pre:border-zinc-800 max-w-none" aria-label="Blog post">
       <Content />
     </article>
 
+    <!-- Post Navigation -->
+    <div class="mt-16 pt-12 border-t border-zinc-200 dark:border-zinc-800">
+      <PostNavigation prevPost={prev} nextPost={next} />
+    </div>
+  </div>
 
-
-    <PostNavigation prevPost={prev} nextPost={next} />
-  </section>
-
-  <Button
-    variant="outline"
-    size="icon"
-    className="group fixed right-8 bottom-8 z-50 hidden"
-    id="scroll-to-top"
-    title="Scroll to top"
-    aria-label="Scroll to top"
-  >
-    <Icon
-      name="lucide:arrow-up"
-      class="mx-auto size-4 transition-all group-hover:-translate-y-0.5"
-    />
-  </Button>
+  <!-- Reading Progress Bar -->
+  <div class="fixed top-0 left-0 w-full h-1 bg-zinc-200 dark:bg-zinc-800 z-50">
+    <div id="reading-progress" class="h-full bg-emerald-500 dark:bg-emerald-400 transition-all duration-150" style="width: 0%"></div>
+  </div>
 
   <script>
     document.addEventListener('astro:page-load', () => {
-      const scrollToTopButton = document.getElementById('scroll-to-top')
-      const footer = document.querySelector('footer')
-
-      if (scrollToTopButton && footer) {
-        scrollToTopButton.addEventListener('click', () => {
-          window.scrollTo({ top: 0, behavior: 'smooth' })
-        })
-
+      // Reading progress
+      const progressBar = document.getElementById('reading-progress')
+      if (progressBar) {
         window.addEventListener('scroll', () => {
-          const footerRect = footer.getBoundingClientRect()
-          const isFooterVisible = footerRect.top <= window.innerHeight
-
-          scrollToTopButton.classList.toggle(
-            'hidden',
-            window.scrollY <= 300 || isFooterVisible
-          )
+          const article = document.querySelector('article')
+          if (article) {
+            const windowHeight = window.innerHeight
+            const documentHeight = article.scrollHeight
+            const scrollTop = window.scrollY
+            const articleTop = article.offsetTop
+            const progress = ((scrollTop - articleTop) / (documentHeight - windowHeight)) * 100
+            const clampedProgress = Math.min(Math.max(progress, 0), 100)
+            progressBar.style.width = `${clampedProgress}%`
+          }
         })
       }
     })
   </script>
+
+  <style>
+    /* Smooth scroll */
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    /* Better link hover */
+    article a {
+      transition: color 0.2s ease;
+    }
+    
+    /* Code block improvements */
+    article pre {
+      scrollbar-width: thin;
+      scrollbar-color: #52525b #18181b;
+    }
+    
+    article pre::-webkit-scrollbar {
+      height: 8px;
+    }
+    
+    article pre::-webkit-scrollbar-track {
+      background: #18181b;
+      border-radius: 4px;
+    }
+    
+    article pre::-webkit-scrollbar-thumb {
+      background: #52525b;
+      border-radius: 4px;
+    }
+    
+    article pre::-webkit-scrollbar-thumb:hover {
+      background: #71717a;
+    }
+  </style>
 </Layout>

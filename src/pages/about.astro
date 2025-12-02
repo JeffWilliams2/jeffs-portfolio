@@ -1,0 +1,116 @@
+---
+import PageHead from '@/components/PageHead.astro'
+import Layout from '@/layouts/Layout.astro'
+import { SITE, TIMELINE } from '@/consts'
+
+const currentUrl = Astro.url
+
+// Separate education and work experience
+const education = TIMELINE.filter(item => item.event.includes('MS') || item.event.includes('BBA'))
+const workExperience = TIMELINE.filter(item => !(item.event.includes('MS') || item.event.includes('BBA')))
+---
+
+<Layout canonicalUrl={currentUrl}>
+  <PageHead slot="head" title="About" />
+
+  <main class="max-w-3xl mx-auto px-6 py-20">
+    <h1 class="text-4xl font-normal mb-12 text-zinc-900 dark:text-zinc-100">About</h1>
+    
+    <div class="text-zinc-700 dark:text-zinc-300 space-y-5 leading-relaxed">
+      <p>
+        I'm a data engineer based in Texas. I build data platforms, design ETL pipelines, and architect cloud infrastructure. 
+        My focus is on systems that are reliable, maintainable, and actually solve business problems.
+      </p>
+      
+      <p>
+        I didn't start in tech. I studied finance at UNT, worked at a brokerage, then moved into banking operations. 
+        That work gave me a front-row seat to how data flows (or doesn't) through organizations—and I kept finding myself 
+        more interested in building the systems than using them.
+      </p>
+
+      <p>
+        So I went back to school. Finished my MS in Advanced Data Analytics in May 2025, focusing on machine learning, 
+        big data systems, and statistical computing. After graduating, I joined a genomics startup as a data engineer 
+        where I built production data infrastructure processing multi-modal biomedical data.
+      </p>
+
+      <p>
+        That experience shaped how I think about engineering: infrastructure as a product, observability as a requirement, 
+        documentation as a deliverable. I presented architecture decisions to executives and learned that the technical 
+        solution is only half the job—you have to be able to explain why it matters.
+      </p>
+    </div>
+
+    <h2 class="text-xl font-medium mt-12 mb-4 text-zinc-900 dark:text-zinc-100">Proficiencies</h2>
+    <div class="text-zinc-700 dark:text-zinc-300 space-y-2 text-sm leading-relaxed">
+      <p><span class="text-zinc-900 dark:text-zinc-100 font-medium">Data Engineering:</span> ETL/ELT pipelines, Data modeling, Data warehouse design, SQL optimization</p>
+      <p><span class="text-zinc-900 dark:text-zinc-100 font-medium">Cloud Platforms:</span> AWS (S3, Glue, Lambda, Redshift), GCP (BigQuery), Snowflake, Databricks</p>
+      <p><span class="text-zinc-900 dark:text-zinc-100 font-medium">Data Processing:</span> Apache Spark/PySpark, Apache Airflow, Dagster, dbt, dlt</p>
+      <p><span class="text-zinc-900 dark:text-zinc-100 font-medium">Databases:</span> PostgreSQL, MySQL, BigQuery, NoSQL, DuckDB</p>
+      <p><span class="text-zinc-900 dark:text-zinc-100 font-medium">Infrastructure:</span> Docker, Kubernetes, Git, CI/CD</p>
+    </div>
+
+    <h2 class="text-xl font-medium mt-12 mb-4 text-zinc-900 dark:text-zinc-100">Outside of work</h2>
+    <p class="text-zinc-600 dark:text-zinc-400 leading-relaxed">
+      When I'm not building data systems, you'll find me coding side projects, hiking, or researching market trends and options strategies.
+    </p>
+
+    <h2 class="text-2xl font-medium mt-16 mb-8 text-zinc-900 dark:text-zinc-100">Timeline</h2>
+    
+    <!-- Education Section -->
+    <div class="mb-12">
+      <h3 class="text-lg font-semibold text-emerald-600 dark:text-emerald-400 mb-6 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+        </svg>
+        Education
+      </h3>
+      <div class="space-y-0">
+        {education.map((item) => (
+          <div class="relative pl-8 pb-8 border-l-2 border-emerald-200 dark:border-emerald-800 last:pb-0">
+            <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-white dark:bg-zinc-950 border-2 border-emerald-500 dark:border-emerald-400"></div>
+            <div class="flex flex-wrap items-baseline gap-3 mb-1">
+              <span class="text-sm font-medium text-emerald-600 dark:text-emerald-400">{item.year}</span>
+              <h4 class="text-zinc-900 dark:text-zinc-100 font-medium">{item.event}</h4>
+            </div>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{item.detail}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Work Experience Section -->
+    <div>
+      <h3 class="text-lg font-semibold text-emerald-600 dark:text-emerald-400 mb-6 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+        </svg>
+        Work Experience
+      </h3>
+      <div class="space-y-0">
+        {workExperience.map((item) => (
+          <div class="relative pl-8 pb-8 border-l-2 border-zinc-200 dark:border-zinc-800 last:pb-0">
+            <div class="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-white dark:bg-zinc-950 border-2 border-emerald-500 dark:border-emerald-400"></div>
+            <div class="flex flex-wrap items-baseline gap-3 mb-1">
+              <span class="text-sm font-medium text-emerald-600 dark:text-emerald-400">{item.year}</span>
+              <h4 class="text-zinc-900 dark:text-zinc-100 font-medium">{item.event}</h4>
+            </div>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{item.detail}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <div class="mt-20 pt-12 border-t border-zinc-200 dark:border-zinc-800/50">
+      <a 
+        href={`mailto:${SITE.email}`}
+        class="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors text-sm"
+      >
+        Get in touch
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+        </svg>
+      </a>
+    </div>
+  </main>
+</Layout>

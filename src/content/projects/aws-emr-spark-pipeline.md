@@ -1,194 +1,59 @@
 ---
-name: 'AWS EMR Spark Data Processing'
-description: 'Distributed data processing pipeline on AWS EMR processing historical stock data using Apache Spark and PySpark. Features S3 integration, VPC configuration, and scalable cluster compute.'
-tags: ['apache-spark', 'pyspark', 'aws', 'emr', 's3', 'python', 'distributed-computing']
+name: 'AWS EMR Spark Pipeline'
+description: 'Distributed data processing on AWS EMR with PySpark for large-scale financial data analysis. Features S3 integration and scalable cluster configuration.'
+tags: ['spark', 'pyspark', 'aws', 'emr', 's3']
 link: 'https://github.com/JeffWilliams2'
 startDate: '2025-10-01'
 ---
 
-# AWS EMR Spark Data Processing Pipeline
+## The Problem
 
-## Overview
+Processing large historical financial datasets on a single machine was taking hours. Needed distributed compute that could scale with data volume.
 
-Built distributed data processing pipeline on AWS EMR processing historical stock market data using Apache Spark and PySpark. Configured EMR cluster with S3 integration and VPC setup for secure, scalable data processing.
+## What I Built
 
-## Key Features
+**EMR Cluster**: Configured AWS EMR cluster with master and worker nodes. Set up VPC networking, security groups, and S3 access.
 
-### 🚀 Distributed Computing
-- **Apache Spark** cluster on AWS EMR
-- **PySpark** for Python-based data processing
-- Scalable compute with multiple worker nodes
-- Optimized for large-scale data processing
+**PySpark Jobs**: Built data processing pipelines using PySpark DataFrames and Spark SQL. Focused on aggregations, joins, and time-series analysis.
 
-### ☁️ AWS Infrastructure
-- **EMR cluster** configuration and management
-- **S3 integration** for data storage
-- **VPC setup** for network security
-- Cost-optimized cluster sizing
-
-### 📊 Financial Data Processing
-- Historical stock data analysis
-- Large-scale time series processing
-- Distributed aggregations
-- Performance optimization
-
-## Technical Architecture
-
-```
-┌────────────────────────────────────┐
-│      Data Source: Stock Data       │
-│      (Historical Time Series)      │
-└──────────────┬─────────────────────┘
-               │
-               ▼
-┌────────────────────────────────────┐
-│         AWS S3 Storage             │
-│    (Raw Data Repository)           │
-└──────────────┬─────────────────────┘
-               │
-               ▼
-┌────────────────────────────────────┐
-│       AWS EMR Cluster              │
-│                                    │
-│  ┌──────────────────────────────┐ │
-│  │    Master Node               │ │
-│  │  (Cluster Coordination)      │ │
-│  └────────┬─────────────────────┘ │
-│           │                        │
-│           ▼                        │
-│  ┌──────────────────────────────┐ │
-│  │    Worker Nodes              │ │
-│  │  • PySpark Processing        │ │
-│  │  • Distributed Compute       │ │
-│  │  • In-Memory Analytics       │ │
-│  └──────────────────────────────┘ │
-└────────────┬───────────────────────┘
-             │
-             ▼
-┌────────────────────────────────────┐
-│    Processed Data Output           │
-│       (S3 Storage)                 │
-└────────────────────────────────────┘
-```
-
-## Implementation Details
-
-### EMR Cluster Configuration
-
-**Cluster Specifications:**
-- Master node: m5.xlarge
-- Core nodes: 2-4 x m5.large
-- Task nodes: Auto-scaling
-- Spark version: 3.x
-
-**Network Setup:**
-```python
-# VPC Configuration
-vpc_config = {
-    'SubnetId': 'subnet-xxxxx',
-    'EmrManagedMasterSecurityGroup': 'sg-master',
-    'EmrManagedSlaveSecurityGroup': 'sg-worker'
-}
-```
-
-### PySpark Processing
-
-**Data Processing Pipeline:**
 ```python
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, avg, max, min
+from pyspark.sql.functions import avg, sum, window
 
-# Initialize Spark Session
-spark = SparkSession.builder \
-    .appName("Stock Data Processing") \
-    .getOrCreate()
+spark = SparkSession.builder.appName("FinancialAnalysis").getOrCreate()
 
 # Read from S3
-df = spark.read.parquet("s3://bucket/stock-data/")
+df = spark.read.parquet("s3://bucket/financial-data/")
 
-# Distributed transformations
-result = df.groupBy("ticker", "date") \
-    .agg(
-        avg("close_price").alias("avg_price"),
-        max("volume").alias("max_volume")
-    ) \
-    .orderBy("date")
+# Time-series aggregation
+daily_metrics = df.groupBy(
+    window("date", "1 day"),
+    "ticker"
+).agg(
+    avg("close").alias("avg_close"),
+    sum("volume").alias("total_volume")
+)
 
-# Write back to S3
-result.write.parquet("s3://bucket/processed/")
+# Write partitioned output
+daily_metrics.write.partitionBy("date").parquet("s3://bucket/processed/")
 ```
 
-### S3 Integration
+**Performance Tuning**: Optimized Spark configurations for memory, parallelism, and shuffle operations. Used broadcast joins for small lookup tables.
 
-**Data Flow:**
-1. Raw data ingestion to S3
-2. EMR reads from S3
-3. Distributed processing with Spark
-4. Results written back to S3
-5. Partitioned storage for efficiency
+## Key Decisions
 
-## Performance Optimizations
+**Why EMR over local Spark?** Data volume exceeded single-machine memory. EMR provides managed infrastructure with auto-scaling.
 
-### Spark Optimization
-- Partitioning strategies
-- Broadcast joins for small tables
-- Caching frequently accessed data
-- Tuned executor memory and cores
+**Why Parquet?** Columnar format with compression. Significant I/O savings for analytical queries that only need specific columns.
 
-### EMR Optimization
-- Auto-scaling policies
-- Spot instances for cost savings
-- S3 DistCP for large transfers
-- Optimized file formats (Parquet)
+**Cost Optimization**: Used spot instances for worker nodes (60% cost savings). Auto-terminate cluster after job completion.
 
-## Key Achievements
+## Results
 
-✅ Processed large-scale historical stock data  
-✅ Configured production-ready EMR cluster  
-✅ Implemented distributed computing patterns  
-✅ Optimized for cost and performance  
-✅ Secure VPC network configuration  
+- Processed GB-scale datasets in minutes
+- Scalable to larger volumes without code changes
+- Repeatable infrastructure with IaC
 
-## Technologies Used
+## Key Technologies
 
-```
-Compute:        AWS EMR, Apache Spark
-Language:       Python, PySpark
-Storage:        AWS S3
-Network:        AWS VPC
-Data Format:    Parquet, CSV
-Orchestration:  Cluster management
-```
-
-## Technical Skills Demonstrated
-
-- **Distributed Computing**: Apache Spark architecture
-- **Cloud Infrastructure**: AWS EMR, S3, VPC
-- **Big Data Processing**: PySpark transformations
-- **Performance Tuning**: Spark optimization
-- **Data Engineering**: ETL pipeline design
-- **Cost Optimization**: Spot instances, auto-scaling
-
-## Use Cases
-
-1. **Historical Analysis**: Large-scale time series processing
-2. **Aggregations**: Distributed group-by operations
-3. **Data Transformation**: Complex ETL workflows
-4. **Performance**: Sub-minute processing of GB+ data
-
-## Future Enhancements
-
-- [ ] Real-time streaming with Spark Structured Streaming
-- [ ] Machine learning with MLlib
-- [ ] Advanced partitioning strategies
-- [ ] Integration with AWS Glue Data Catalog
-- [ ] Monitoring with CloudWatch
-
-## Project Significance
-
-This project demonstrates:
-- Distributed computing expertise
-- AWS cloud platform knowledge
-- Big data processing capabilities
-- Financial data domain experience
-- Infrastructure optimization skills
+Apache Spark, PySpark, AWS EMR, S3, VPC, Python

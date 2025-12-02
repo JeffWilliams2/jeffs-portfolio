@@ -31,77 +31,45 @@ const currentUrl = Astro.url;
     ]}
   />
 
-  <section class="max-screen mt-12 px-4 md:px-6">
-    <div class="flex flex-row items-center justify-between mb-8">
-      <div>
-          <div class="flex w-fit items-center gap-2 text-primary">
-            <Icon name="lucide:star" class="h-4 w-4 text-yellow-500 animate-pulse" />
-            <p class="shimmer word-spacing font-mono text-sm uppercase leading-none text-primary">My Work</p>
-          </div>
-          <h2
-            id="skills-title"
-            class="font-custom text-foreground text-4xl font-bold mt-2"
-          >
-            Projects
-          </h2>
-          <p class="text-muted-foreground text-md max-w-2xl mt-3">
-            Here are some of the projects I have worked on. I am always looking for new challenges and opportunities to learn and grow as a developer.
-          </p>
-      </div>
-      <div>
-        <BuyMeCoffee />
-      </div>  
-    </div>
-  
-    <div class="mt-12 grid grid-cols-1 py-sm sm:grid-cols-2 gap-x-8 mb-16 gap-y-8">
-      {projectData.map((project, _) => (
-        <div
-          class="group h-full w-full transition-all duration-300 hover:translate-y-[-4px] even:sm:mt-14"
-        >
-          <a class="flex flex-col h-full w-full rounded-2xl overflow-hidden bg-card hover:shadow-lg transition-all duration-300 border border-card-foreground/10" href={`/projects/${project.id}`} aria-label="Project link">
-            {project.data.image && (
-              <div class="aspect-[16/10] w-full overflow-hidden">
-                <Image
-                  alt={project.data.name}
-                  src={project.data.image}
-                  class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  loading="lazy"
-                  fetchpriority="low"
-                  width={600}
-                  height={375}
-                />
-              </div>
-            )}
-            <div
-              class="flex flex-col justify-between p-5 flex-grow"
-            >
-              <div>
-                <h3 class="text-xl font-medium text-foreground mb-2">{project.data.name}</h3>
-                <p class="text-sm text-muted-foreground line-clamp-2 mb-4">
-                  {project.data.description || "An innovative project showcasing creativity and technical skills"}
-                </p>
-              </div>
-              <div class="flex flex-wrap justify-between items-center mt-auto pt-3 border-t border-border/40">
-                <div class="flex flex-wrap gap-2">
-                  {project.data.tags?.slice(0, 2).map((tag) => (
-                    <span class="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium">{tag}</span>
-                  ))}
-                  {project.data.tags?.length > 2 && (
-                    <span class="text-xs px-2 py-1 rounded-full bg-secondary/80 text-primary font-medium">+{project.data.tags.length - 2}</span>
-                  )}
-                </div>
-                <p class="text-xs font-medium text-muted-foreground flex items-center">
-                  <Icon name="lucide:calendar" class="h-3 w-3 mr-1" />
-                  {project.data.endDate ? new Date(project.data.endDate).getFullYear() : 'Ongoing'}
-                </p>
-              </div>
-            </div>
-          </a>
-        </div>
-      ))}
+  <section class="max-w-4xl mx-auto px-6 py-20">
+    <div class="mb-16">
+      <h1 class="text-4xl font-normal mb-4 text-zinc-900 dark:text-zinc-100">Projects</h1>
+      <p class="text-zinc-600 dark:text-zinc-400 text-base">
+        Detailed case studies on selected work. Architecture decisions, challenges, outcomes.
+      </p>
     </div>
 
-    <div class="mt-16 mb-16">
+    <div class="space-y-6 mb-20">
+      {projectData.map((project) => (
+        <a 
+          href={`/projects/${project.id}`} 
+          class="block group border border-zinc-200 dark:border-zinc-800 rounded-lg p-6 hover:border-zinc-300 dark:hover:border-zinc-700 hover:shadow-sm transition-all"
+          aria-label={`View ${project.data.name} project`}
+        >
+          <div class="flex items-start justify-between mb-3">
+            <h3 class="text-xl font-medium text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors pr-4">
+              {project.data.name}
+            </h3>
+            <svg class="w-5 h-5 text-zinc-400 dark:text-zinc-600 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 17L17 7M17 7H7M17 7V17" />
+            </svg>
+          </div>
+          <p class="text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed mb-4">
+            {project.data.description}
+          </p>
+          <div class="flex flex-wrap items-center gap-2">
+            {project.data.tags?.slice(0, 6).map((tag) => (
+              <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-zinc-100 dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 text-xs font-medium border border-zinc-200 dark:border-zinc-800 capitalize">
+                {tag}
+              </span>
+            ))}
+            {project.data.tags?.length > 6 && (
+              <span class="text-xs text-zinc-500">+{project.data.tags.length - 6}</span>
+            )}
+          </div>
+        </a>
+      ))}
+    </div>    <div class="mt-16 mb-16">
       <PaginationComponent
         currentPage={page.currentPage}
         totalPages={page.lastPage}

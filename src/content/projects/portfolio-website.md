@@ -2,7 +2,6 @@
 name: 'Portfolio Website'
 description: 'Personal portfolio built with Astro.js, React, and Tailwind CSS. Achieves perfect 100 Lighthouse performance score with optimized Core Web Vitals.'
 tags: ['astro', 'react', 'typescript', 'tailwind', 'vercel']
-image: '/static/portfolio-site-img.png'
 link: 'https://jeffwilliams.dev'
 startDate: '2025-10-01'
 endDate: '2025-12-01'

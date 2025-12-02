@@ -83,22 +83,22 @@ export const EXPERIENCE: ExperienceItem[] = [
     ]
   },
   {
-    role: 'Banking',
+    role: 'Private Client Banker',
     type: 'JPMorgan Chase & Co.',
     period: 'Mar 2024 – Jul 2024',
     points: [
-      'Processed financial transactions with 100% accuracy',
-      'Identified patterns in customer transaction data to recommend products and streamline service delivery'
+      'Managed high-volume transactions and account services for private banking clients',
+      'Analyzed customer financial data to provide tailored product recommendations'
     ]
   },
   {
-    role: 'Finance Representative',
+    role: 'Financial Services Representative',
     type: 'Charles Schwab',
     period: 'Jan 2022 – Dec 2022',
     points: [
-      'Obtained Series 7 and SIE licenses for securities trading',
-      'Communication and client relations in financial services',
-      'Developed deep understanding of financial and banking operations'
+      'Earned Series 7 and SIE licenses for securities trading',
+      'Advised clients on investment strategies and portfolio management',
+      'Executed trades and managed accounts across equities, options, and fixed income'
     ]
   }
 ]

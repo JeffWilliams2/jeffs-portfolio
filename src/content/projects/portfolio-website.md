@@ -7,6 +7,8 @@ startDate: '2025-10-01'
 endDate: '2025-12-01'
 ---
 
+![Lighthouse Score](/static/portfolio-site-img.png)
+
 ## Overview
 
 Fast, modern portfolio to showcase data engineering projects and technical writing.

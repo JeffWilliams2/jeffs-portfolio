@@ -107,7 +107,7 @@ export const CERTIFICATIONS = [
   'Certified Cloud Practitioner (2024)',
   'Dagster Essentials — Dagster Labs (Oct 2025)',
   'Gen AI Fundamentals — Databricks (Aug 2025)',
-  'LangChain for LLM Application Dev — DeepLearning.AI (Jul 2025)'
+  'LangChain for LLM App Dev — DeepLearning.AI (Jul 2025)'
 ]
 
 export interface TimelineItem {

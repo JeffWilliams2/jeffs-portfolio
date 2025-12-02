@@ -120,7 +120,7 @@ export const TIMELINE: TimelineItem[] = [
   {
     year: '2025',
     event: 'MS Advanced Data Analytics, UNT',
-    detail: 'Machine Learning, Deep Learning, Big Data Systems, Statistical Computing'
+    detail: 'Machine Learning, Deep Learning, Big Data Systems'
   },
   {
     year: '2025',

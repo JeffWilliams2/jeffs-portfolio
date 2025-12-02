@@ -9,6 +9,7 @@ import { Particles } from '@/components/react/particles'
 import { SITE } from '@/consts'
 import { cn } from '@/lib/utils'
 import Analytics from '@vercel/analytics/astro'
+import SpeedInsights from '@vercel/speed-insights/astro'
 
 const {
   isWide = false
@@ -73,5 +74,6 @@ const {
       <Footer />
     </div>
     <Analytics />
+    <SpeedInsights />
   </body>
 </html>

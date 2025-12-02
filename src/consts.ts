@@ -104,11 +104,10 @@ export const EXPERIENCE: ExperienceItem[] = [
 ]
 
 export const CERTIFICATIONS = [
-  'AWS Certified Cloud Practitioner (2024)',
-  'Databricks Fundamentals (2025)',
-  'Generative AI Fundamentals — Databricks (2025)',
-  'LangChain for LLM Development — DeepLearning.AI (2025)',
-  'Dagster Essentials (2025)'
+  'Certified Cloud Practitioner (2024)',
+  'Dagster Essentials — Dagster Labs (Oct 2025)',
+  'Gen AI Fundamentals — Databricks (Aug 2025)',
+  'LangChain for LLM Application Dev — DeepLearning.AI (Jul 2025)'
 ]
 
 export interface TimelineItem {

@@ -3,13 +3,29 @@
 # Deploy changes to GitHub/Vercel
 # Usage: ./scripts/deploy.sh "Commit message"
 
-# Deploy directly from this repo
-SOURCE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+DEPLOY_DIR="$HOME/Desktop/jeffs-portfolio"
+SOURCE_DIR="$(dirname "$0")/.."
 MESSAGE="${1:-Update content}"
 
-cd "$SOURCE_DIR" || exit 1
+if [ ! -d "$DEPLOY_DIR" ]; then
+  echo "Error: Deployment directory not found: $DEPLOY_DIR"
+  exit 1
+fi
 
-echo "=== Deploying from $SOURCE_DIR ==="
+echo "=== Syncing to deployment repo ==="
+
+# Copy updated content
+rm -rf "$DEPLOY_DIR/src/content"
+cp -r "$SOURCE_DIR/src/content" "$DEPLOY_DIR/src/"
+
+# Copy other key files that might have changed
+cp -r "$SOURCE_DIR/src/pages" "$DEPLOY_DIR/src/" 2>/dev/null
+cp -r "$SOURCE_DIR/public" "$DEPLOY_DIR/" 2>/dev/null
+
+echo "✓ Files synced"
+
+# Git operations
+cd "$DEPLOY_DIR" || exit 1
 
 git add -A
 git status --short

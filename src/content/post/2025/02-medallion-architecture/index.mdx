@@ -1,0 +1,194 @@
+---
+title: "Designing Data Lakehouses with Medallion Architecture"
+description: "A practical guide to implementing Bronze, Silver, and Gold layers based on lessons from processing 20+ TB of production healthcare data."
+publishDate: 2025-01-20
+tags:
+  - data-engineering
+  - architecture
+  - lakehouse
+  - best-practices
+category: data-engineering
+toc: true
+noHero: true
+draft: false
+---
+
+## Context
+
+Data lakes promised flexibility but delivered chaos. Data warehouses offered structure but limited raw data access. The medallion architecture bridges this gap—providing the flexibility of lakes with the reliability of warehouses.
+
+In this post, I walk through how I implemented medallion architecture on a 20+ TB healthcare data platform, including the design decisions, mistakes, and lessons learned.
+
+## Problem Statement
+
+- **Data source characteristics:** Multi-modal healthcare data—structured EMR records, semi-structured DICOM metadata, unstructured genomic files—each with different quality levels and update patterns
+- **Constraints:** Strict audit requirements (can't lose raw data), diverse consumers (data engineers, scientists, analysts), and evolving schema requirements
+- **Success criteria:** Complete data lineage from source to report, ability to reprocess historical data, and clear separation between "raw" and "trusted" data
+
+## Architectural Approach
+
+### High-Level Architecture
+
+```
+Sources → Bronze (Raw) → Silver (Cleaned) → Gold (Curated) → Consumers
+```
+
+Each layer has a distinct purpose:
+
+| Layer | Contents | Consumers | Retention |
+|-------|----------|-----------|-----------|
+| **Bronze** | Exact copy of source data | Data Engineers | Long-term (audit) |
+| **Silver** | Cleaned, validated, deduplicated | Engineers, Scientists | Medium-term |
+| **Gold** | Business-ready aggregations | Analysts, BI Tools | Query-optimized |
+
+### Why This Pattern?
+
+The medallion architecture solves three problems simultaneously:
+
+1. **Debugging:** When Gold data looks wrong, trace back through Silver to Bronze to find the issue
+2. **Reprocessing:** Fix transformation bugs and rerun—raw data is preserved
+3. **Access control:** Give analysts Gold access without exposing raw data
+
+### Alternatives Considered
+
+| Approach | Pros | Cons | Why Not Chosen |
+|----------|------|------|----------------|
+| Single-layer warehouse | Simple | No raw data, can't reprocess | Audit requirements |
+| Two-layer (raw + curated) | Simpler than three | Missing intermediate validation | Complex transformations needed staging |
+| Medallion (three-layer) | Full flexibility | More storage, complexity | ✓ Chosen |
+
+## Key Design Decisions
+
+### Bronze Layer: Preserve Everything
+
+```sql
+CREATE TABLE bronze.emr_records (
+    _raw_data VARIANT,           -- Original JSON
+    _source_system STRING,       -- Where it came from
+    _source_file STRING,         -- Specific file/batch
+    _ingested_at TIMESTAMP,      -- When we received it
+    _batch_id STRING             -- Processing batch ID
+)
+PARTITIONED BY (_ingested_at::DATE);
+```
+
+**Key principle:** Never transform in Bronze. Add metadata for lineage, but preserve the source exactly as received.
+
+### Silver Layer: Trust Boundary
+
+```sql
+CREATE TABLE silver.emr_records (
+    record_id STRING NOT NULL,
+    patient_id STRING NOT NULL,
+    encounter_date DATE,
+    diagnosis_codes ARRAY<STRING>,
+    -- Quality metadata
+    _bronze_id STRING,           -- Link to source record
+    _processed_at TIMESTAMP,
+    _quality_score FLOAT
+);
+```
+
+Silver is where data becomes "trusted." Transformations include:
+- Schema enforcement and type casting
+- Deduplication on business keys
+- Data quality validation (nulls, ranges, referential integrity)
+- Standardization (date formats, code mappings)
+
+### Gold Layer: Business Logic
+
+```sql
+CREATE TABLE gold.patient_encounters (
+    patient_id STRING,
+    encounter_date DATE,
+    primary_diagnosis STRING,
+    -- Aggregated metrics
+    total_procedures INT,
+    estimated_cost DECIMAL(12,2),
+    risk_score FLOAT
+);
+```
+
+Gold models are optimized for consumption: pre-joined, aggregated, and filtered to what consumers actually need.
+
+### Failure Handling
+
+```python
+def process_to_silver(bronze_batch_id: str) -> None:
+    """Transform Bronze → Silver with quality gates."""
+    records = read_bronze(bronze_batch_id)
+    
+    valid_records, invalid_records = validate(records)
+    
+    # Always persist valid records
+    write_silver(valid_records)
+    
+    # Route failures to dead-letter for investigation
+    if invalid_records:
+        write_dead_letter(invalid_records)
+        alert_on_threshold(invalid_records, threshold=0.05)
+```
+
+## Tradeoffs & Constraints
+
+**What I didn't optimize for:**
+- Storage efficiency (Bronze keeps everything, even duplicates)
+- Query speed on Bronze (it's for debugging, not querying)
+
+**Why I kept all three layers:**
+- Two layers (skipping Silver) pushed too much complexity into Gold models
+- The "trust boundary" concept required a dedicated validation layer
+
+**Hidden complexity:**
+- Schema evolution in Silver is hard—you need migration strategies
+- Lineage tracking across layers requires discipline and tooling
+
+## What Went Wrong
+
+- **Bronze became a dumping ground:** Without clear ownership, teams started querying Bronze directly instead of waiting for Silver. Had to implement access controls and education.
+
+- **Silver schema was too rigid:** Initial design assumed stable upstream schemas. Reality required flexible columns for vendor-specific fields.
+
+- **Gold models proliferated:** Each team wanted their own aggregations. Ended up with 50+ Gold tables before implementing governance.
+
+- **Reprocessing was harder than expected:** "Just rerun from Bronze" sounds simple, but required careful handling of downstream dependencies and state.
+
+## Lessons Learned
+
+This project reinforced the importance of:
+
+- **Bronze is sacred:** Never transform, never delete (within retention). This is your audit trail and reprocessing source.
+- **Silver is the contract:** Define clear quality standards. If it passes Silver validation, downstream consumers can trust it.
+- **Gold is consumption-driven:** Don't build Gold models speculatively. Start from consumer needs and work backward.
+- **Lineage is mandatory:** Every Silver record should link to Bronze. Every Gold record should link to Silver. This is what makes debugging possible.
+
+## How I'd Scale This
+
+### At 10× Data Volume
+- Implement incremental processing for Silver (don't reprocess everything)
+- Add partitioning and clustering strategies per access pattern
+- Introduce data quality framework (Great Expectations, Soda)
+
+### At 100× Data Volume
+- Consider real-time Bronze ingestion (streaming to raw layer)
+- Implement data tiering in Bronze (hot/warm/cold)
+- Add materialized views for frequently-accessed Gold aggregations
+
+### Cloud Services I'd Introduce
+
+| Current | At Scale |
+|---------|----------|
+| Batch Airflow processing | Streaming ingestion (Kafka/Kinesis) |
+| Manual quality checks | Great Expectations automation |
+| Simple partitioning | Iceberg/Delta for time travel + compaction |
+| Basic lineage | OpenMetadata for catalog + lineage |
+
+## Closing
+
+The medallion architecture isn't just about organizing tables—it's about building a system that can evolve. Raw data preservation enables reprocessing. Clear layer boundaries enable debugging. Consumption-driven Gold models enable self-service analytics.
+
+The key insight: **each layer serves a different audience with different needs.** Design accordingly.
+
+---
+
+*Have questions about lakehouse architecture? Reach out on [LinkedIn](https://www.linkedin.com/in/jefferywilliams4) or [GitHub](https://github.com/jeffwilliams2).*

@@ -1,0 +1,116 @@
+---
+title: Analytics Engineering with dbt + Snowflake
+description: Ingests, transforms, and models e-commerce data to enable self-service analytics with dimensional modeling, automated testing, and full documentation.
+publishDate: 2025-08-01
+draft: true
+---
+
+import LinkWithLabel from '../../../../components/LinkWithLabel.astro';
+
+# Analytics Engineering with dbt + Snowflake
+
+> **Ingests, transforms, and models e-commerce data to enable self-service analytics with dimensional modeling, automated testing, and full documentation.**
+
+## Overview
+
+Analytics teams often struggle with inconsistent metrics, undocumented transformations, and brittle SQL scripts. This project builds a production-grade analytics platform using dbt and Snowflake, implementing dimensional modeling (Kimball methodology), comprehensive testing, and CI/CD automation.
+
+The goal was to design a maintainable, well-tested transformation layer that enables analysts to trust and self-serve their data needs.
+
+## Goals
+
+- Ingest raw transactional data from Postgres and CSV sources into Snowflake
+- Transform raw data into dimensional models (facts and dimensions)
+- Implement 100% test coverage with schema and data quality tests
+- Enable incremental processing to minimize compute costs
+- Auto-generate documentation for all models and columns
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Data Sources                            │
+│           Postgres │ CSV Files │ APIs │ Spreadsheets        │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Ingestion                               │
+│               Fivetran │ Snowflake COPY │ dbt seeds         │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Transformation (dbt)                      │
+│      Staging → Intermediate → Marts (Bronze/Silver/Gold)    │
+│                    Tests │ Documentation                     │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       Storage                                │
+│                    Snowflake Warehouse                       │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Analytics / Consumption                     │
+│            Looker │ Mode │ Jupyter │ Reverse ETL            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Technology Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| **Ingestion** | Fivetran, Snowflake stages, dbt seeds |
+| **Processing** | dbt Core, SQL, Jinja |
+| **Storage** | Snowflake |
+| **Orchestration** | Airflow, GitHub Actions |
+| **Infrastructure** | Terraform (Snowflake resources) |
+| **Documentation** | dbt docs, Elementary |
+
+## Implementation Details
+
+**Batch vs Streaming:** Batch transformations on a schedule—dbt runs hourly during business hours, nightly for full refreshes. Snowflake's separation of storage/compute makes this cost-effective.
+
+**Schema Design:** Three-layer dbt project: staging (source-conformed), intermediate (business logic), marts (dimensional models). Star schema with conformed dimensions.
+
+**Handling Duplicates:** Staging models deduplicate using `ROW_NUMBER()` over natural keys. Incremental models use `unique_key` config for merge operations.
+
+**Scheduling Strategy:** Airflow triggers dbt runs, passing the `--select` flag for model selection. Slim CI builds only run affected models on PRs.
+
+**Tradeoffs:** Accepted some denormalization in marts for query simplicity, increasing storage slightly but dramatically improving analyst experience.
+
+## Data Characteristics
+
+| Metric | Value |
+|--------|-------|
+| **Volume** | ~5M rows/day, 50+ models |
+| **Frequency** | Hourly incremental, nightly full |
+| **Format** | Structured → dimensional |
+| **Growth** | ~20% annually |
+
+## Reliability & Edge Cases
+
+- All models have `unique` and `not_null` tests on primary keys
+- Referential integrity tests between facts and dimensions
+- Custom data freshness tests alert on stale source data
+- PR checks run `dbt build --select state:modified+` for fast feedback
+- Rollback via dbt snapshots and Snowflake Time Travel
+
+## Lessons Learned
+
+**What surprised me:** Incremental models are harder than they look. Edge cases around late-arriving data required careful `updated_at` logic and lookback windows.
+
+**What broke:** Early versions had circular dependencies between intermediate models. Refactored to strict DAG ordering with clear layer boundaries.
+
+**What I'd redesign:** Would adopt dbt contracts and data tests earlier. Also would implement semantic layer (MetricFlow) for consistent metric definitions.
+
+## Future Improvements
+
+- Add dbt Semantic Layer for governed metric definitions
+- Implement Elementary for data observability and anomaly detection
+- Move to dbt Cloud for managed orchestration and IDE
+- Add column-level lineage visualization
+- Implement reverse ETL to push metrics back to operational systems
+
+## Links
+
+- <LinkWithLabel label="GitHub" href="https://github.com/jeffwilliams2" title="GitHub repository" />

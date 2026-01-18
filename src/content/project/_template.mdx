@@ -1,0 +1,125 @@
+---
+# DATA ENGINEERING PORTFOLIO PROJECT TEMPLATE
+# Copy this file and rename it to create a new project
+# Place in: src/content/project/YYYY/project-name/index.mdx
+
+title: Project Title
+description: One-line value statement. Ingests, transforms, and analyzes X data to enable Y outcome.
+publishDate: 2026-01-01
+heroAlt: Project Architecture Diagram
+draft: true
+---
+
+import LinkWithLabel from '../../../../components/LinkWithLabel.astro';
+
+# Project Title
+
+> **One-line value statement:** Ingests, transforms, and analyzes X data to enable Y outcome.
+
+## Overview
+
+3–4 sentences max. No fluff. Answer: What problem exists? What data is involved? What you built? Who it's for?
+
+This project ingests `{datasource}` at `{frequency}`, processes it into structured datasets, and exposes insights via `{output}`.
+The goal was to design a reliable, scalable data pipeline that handles semi-structured data and supports historical analysis.
+
+## Goals
+
+- Ingest `{type of data}` from `{source}`
+- Normalize semi/unstructured data into relational format
+- Support historical queries and aggregations
+- Ensure idempotent, fault-tolerant runs
+- Minimize operational overhead and cost
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Data Source                             │
+│              {API / Database / Files / Streaming}            │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Ingestion                               │
+│              {Python / Spark / Kafka / Airbyte}             │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Transformation                            │
+│              {dbt / Spark / SQL / Pandas}                   │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       Storage                                │
+│         {Warehouse / Lake / Database / Object Store}        │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Analytics / Consumption                     │
+│            {BI Tools / APIs / ML Models / Dashboards}       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Technology Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| **Ingestion** | Python, Requests, BeautifulSoup |
+| **Processing** | Pandas, SQL, dbt |
+| **Storage** | Postgres, Snowflake, S3 |
+| **Orchestration** | Airflow, Dagster, GitHub Actions |
+| **Infrastructure** | Docker, Kubernetes, Terraform |
+| **Visualization** | SQL, Streamlit, Looker |
+
+## Implementation Details
+
+Cover these briefly:
+- Why you chose batch vs streaming
+- Schema design decisions
+- Handling duplicates / retries
+- Scheduling strategy
+- Tradeoffs you accepted
+
+**Example:**
+
+Data is ingested in daily batches to simplify retry logic and reduce operational complexity.
+Each run is idempotent using unique post identifiers to prevent duplicates.
+A normalized schema was chosen to support flexible querying as job attributes evolved.
+
+## Data Characteristics
+
+| Metric | Value |
+|--------|-------|
+| **Volume** | ~X rows/day |
+| **Frequency** | Daily / Hourly / Real-time |
+| **Format** | Semi-structured → relational |
+| **Growth** | Linear / Exponential |
+
+## Reliability & Edge Cases
+
+- Handles failed runs via retries
+- Gracefully skips malformed records
+- Supports backfills for missed days
+- Alerting on pipeline failures
+
+## Lessons Learned
+
+What surprised you? What broke? What you'd redesign?
+
+**Example:**
+
+Parsing free-text job posts introduced edge cases that required iterative schema changes.
+In a future iteration, I would separate raw ingestion from downstream transformations more clearly.
+
+## Future Improvements
+
+- Move orchestration to Airflow / Dagster
+- Add data quality checks (Great Expectations, dbt tests)
+- Introduce cloud storage / data warehouse
+- Support near-real-time ingestion
+- Add observability and lineage tracking
+
+## Links
+
+- <LinkWithLabel label="GitHub Repository" href="https://github.com/jeffwilliams2/project-name" title="Source code" />
+- <LinkWithLabel label="Live Demo" href="https://demo.example.com" title="Interactive dashboard" />

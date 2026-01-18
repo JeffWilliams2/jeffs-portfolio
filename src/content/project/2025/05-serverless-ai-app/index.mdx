@@ -1,0 +1,115 @@
+---
+title: Serverless AI App with AWS Bedrock
+description: Ingests user queries, processes them through Claude AI, and persists conversations to enable a scalable, cost-effective chat application.
+publishDate: 2025-05-01
+draft: true
+---
+
+import LinkWithLabel from '../../../../components/LinkWithLabel.astro';
+
+# Serverless AI App with AWS Bedrock
+
+> **Ingests user queries, processes them through Claude AI, and persists conversations to enable a scalable, cost-effective chat application.**
+
+## Overview
+
+Building AI applications requires balancing user experience, cost management, and operational simplicity. This project builds a full-stack serverless chat application using AWS Bedrock (Claude), demonstrating cloud architecture patterns for AI workloads.
+
+The goal was to design a production-ready application with authentication, conversation persistence, and cost controls—all without managing servers.
+
+## Goals
+
+- Ingest user chat messages through authenticated API endpoints
+- Process queries through AWS Bedrock (Claude) with streaming responses
+- Persist conversation history for context continuity
+- Implement cost controls via rate limiting and usage tracking
+- Deploy with infrastructure as code for reproducibility
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Data Sources                            │
+│                   User Input (React Frontend)               │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Ingestion                               │
+│        API Gateway │ Cognito Auth │ Request Validation      │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Transformation                            │
+│    Lambda │ Prompt Engineering │ Bedrock API │ Streaming    │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       Storage                                │
+│         DynamoDB (Conversations) │ S3 (Attachments)         │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Analytics / Consumption                     │
+│          React Frontend │ CloudWatch Dashboards             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Technology Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| **Ingestion** | API Gateway, Cognito, Lambda |
+| **Processing** | AWS Bedrock (Claude 3), Python |
+| **Storage** | DynamoDB, S3 |
+| **Orchestration** | API Gateway, EventBridge |
+| **Infrastructure** | SAM, CloudFormation, Terraform |
+| **Frontend** | React, TypeScript, Amplify |
+
+## Implementation Details
+
+**Batch vs Streaming:** Real-time request/response for chat interactions. Lambda streaming responses provide better UX than waiting for full completion. Background jobs handle usage aggregation.
+
+**Schema Design:** DynamoDB single-table design—partition key is user_id, sort key is conversation_id#timestamp. Enables efficient queries for conversation history and user-level access patterns.
+
+**Handling Duplicates:** API Gateway request IDs enable idempotent retries. DynamoDB conditional writes prevent duplicate message storage.
+
+**Scheduling Strategy:** EventBridge triggers nightly jobs for usage aggregation, stale conversation cleanup, and cost reporting.
+
+**Tradeoffs:** Accepted DynamoDB's query limitations for simpler operations and automatic scaling. Complex analytics queries route to exported data in S3/Athena.
+
+## Data Characteristics
+
+| Metric | Value |
+|--------|-------|
+| **Volume** | Variable, ~1K-10K requests/day |
+| **Frequency** | Real-time, event-driven |
+| **Format** | JSON messages → DynamoDB items |
+| **Growth** | Dependent on user adoption |
+
+## Reliability & Edge Cases
+
+- Cognito handles authentication, eliminating custom auth code vulnerabilities
+- Lambda concurrency limits prevent runaway costs from traffic spikes
+- DynamoDB on-demand scaling handles variable workloads
+- Bedrock rate limits handled with exponential backoff and user feedback
+- Dead-letter queues capture failed requests for debugging
+
+## Lessons Learned
+
+**What surprised me:** Lambda cold starts significantly impacted perceived latency. Provisioned concurrency for the chat Lambda eliminated this for active users.
+
+**What broke:** Initial DynamoDB schema required a GSI for every new access pattern. Refactored to single-table design with composite sort keys for flexibility.
+
+**What I'd redesign:** Would implement WebSocket connections (API Gateway WebSocket API) for true real-time chat instead of polling. Also would add request caching for common queries.
+
+## Future Improvements
+
+- Add WebSocket support for real-time streaming without polling
+- Implement RAG (Retrieval Augmented Generation) with Bedrock Knowledge Bases
+- Add multi-modal support for image understanding
+- Build admin dashboard for usage monitoring and cost allocation
+- Implement A/B testing framework for prompt optimization
+
+## Links
+
+- <LinkWithLabel label="GitHub" href="https://github.com/jeffwilliams2" title="GitHub repository" />

@@ -1,0 +1,152 @@
+---
+# BLOG POST TEMPLATE (DATA + ARCHITECTURE FOCUSED)
+# Copy this file and rename it to create a new blog post
+# Place in: src/content/post/YYYY/MM-post-title/index.mdx
+
+title: "Designing a Reliable Batch Pipeline for Semi-Structured Data"
+# Title should be problem-oriented, not tutorial-oriented
+# Bad: "How I Built a Pipeline"
+# Good: "Designing a Reliable Batch Pipeline for Semi-Structured Job Market Data"
+
+description: "A deep dive into architectural decisions for building data pipelines that balance reliability, simplicity, and scalability."
+publishDate: 2026-01-01
+heroAlt: Data Pipeline Architecture
+category: data-engineering
+tags:
+  - data-engineering
+  - python
+  - sql
+draft: true
+---
+
+## Context
+
+Explain why this matters in 1–2 paragraphs.
+
+Many real-world data sources are noisy, incomplete, and change over time.
+In this post, I walk through how I approached designing a data pipeline that balances reliability, simplicity, and future scalability.
+
+## Problem Statement
+
+Be explicit about:
+- **Data source characteristics:** What are you working with?
+- **Constraints:** Time, cost, scale limitations
+- **Success criteria:** What does "working" look like?
+
+## Architectural Approach
+
+This is the Solutions Architect gold.
+
+### High-Level Architecture
+
+```
+Source → Ingestion → Transformation → Storage → Consumption
+```
+
+### Why This Pattern?
+
+Explain the reasoning behind your architectural choices.
+
+I chose batch processing over streaming to reduce operational complexity and because the data did not require real-time freshness.
+
+### Alternatives Considered
+
+| Approach | Pros | Cons | Why Not Chosen |
+|----------|------|------|----------------|
+| Streaming | Real-time | Complex, costly | Data freshness not critical |
+| Lambda | Best of both | Complexity | Over-engineered for scale |
+| Batch | Simple, reliable | Latency | ✓ Chosen |
+
+## Key Design Decisions
+
+### Storage Choice
+
+Why did you choose this database/warehouse/lake?
+
+### Schema Evolution
+
+How do you handle changing data structures over time?
+
+### Orchestration
+
+What coordinates your pipeline runs? Why?
+
+### Failure Handling
+
+How do you handle retries, dead letters, alerting?
+
+```python
+# Example: Idempotent upsert pattern
+def upsert_records(records: list[dict]) -> None:
+    """Insert or update records using unique key."""
+    for record in records:
+        db.execute("""
+            INSERT INTO table (id, data, updated_at)
+            VALUES (:id, :data, NOW())
+            ON CONFLICT (id) DO UPDATE
+            SET data = :data, updated_at = NOW()
+        """, record)
+```
+
+## Tradeoffs & Constraints
+
+This is what seniors look for. Be honest about:
+
+- **What you didn't optimize for:** Real-time, cost, complexity
+- **Why certain tools were avoided:** Over-engineering, learning curve, cost
+- **Cost vs complexity decisions:** Managed services vs self-hosted
+
+## What Went Wrong
+
+Be honest and technical.
+
+- Unexpected edge cases in data parsing
+- Breaking changes from upstream APIs
+- Performance bottlenecks at scale
+- Schema migrations that caused downtime
+
+## Lessons Learned
+
+Tie back to future projects.
+
+This project reinforced the importance of:
+- Separating raw ingestion from transformations
+- Designing schemas with evolution in mind
+- Building observability from day one
+- Starting simple and adding complexity only when needed
+
+## How I'd Scale This
+
+This screams "future solutions architect".
+
+### At 10× Data Volume
+
+- Add partitioning and parallel processing
+- Introduce caching layer
+- Optimize queries with indexes
+
+### At 100× Data Volume
+
+- Move to distributed processing (Spark)
+- Migrate to cloud data warehouse
+- Add data quality framework
+- Implement data lineage tracking
+
+### Cloud Services I'd Introduce
+
+| Current | At Scale |
+|---------|----------|
+| Postgres | Snowflake / BigQuery |
+| Cron | Airflow / Dagster |
+| Local files | S3 / GCS |
+| Manual checks | Great Expectations |
+
+## Closing
+
+Short, reflective.
+
+This project helped bridge the gap between building data pipelines and designing systems that can evolve over time. The key insight was that **good architecture is about managing change**, not just solving today's problem.
+
+---
+
+*Have questions or want to discuss the architecture? Reach out on [LinkedIn](https://www.linkedin.com/in/jefferywilliams4) or [GitHub](https://github.com/jeffwilliams2).*

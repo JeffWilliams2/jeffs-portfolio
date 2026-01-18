@@ -1,0 +1,115 @@
+---
+title: Fed Speech Sentiment Analysis
+description: Ingests, transcribes, and analyzes Federal Reserve speeches to extract sentiment signals for market correlation and trading research.
+publishDate: 2025-06-01
+draft: false
+---
+
+import LinkWithLabel from '../../../../components/LinkWithLabel.astro';
+
+# Fed Speech Sentiment Analysis
+
+> **Ingests, transcribes, and analyzes Federal Reserve speeches to extract sentiment signals for market correlation and trading research.**
+
+## Overview
+
+Federal Reserve communications move markets, but extracting actionable signals from speeches requires processing audio, parsing nuanced language, and correlating with price movements. This project builds an NLP pipeline that transcribes Fed speeches, applies financial sentiment analysis, and visualizes correlations with market data.
+
+The goal was to design a reliable pipeline that handles unstructured audio data and produces structured sentiment metrics for quantitative analysis.
+
+## Goals
+
+- Ingest Fed speech audio from official sources and YouTube archives
+- Transcribe audio to text with speaker detection and timestamps
+- Extract sentiment scores using domain-specific NLP models (FinBERT)
+- Correlate sentiment changes with market movements (S&P 500, Treasury yields)
+- Provide interactive dashboard for exploring historical patterns
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Data Sources                            │
+│       Fed Website │ YouTube │ FRED API │ Yahoo Finance      │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Ingestion                               │
+│         yt-dlp │ Requests │ API Clients │ Scrapy            │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Transformation                            │
+│    Whisper (STT) → Text Cleaning → FinBERT (Sentiment)      │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       Storage                                │
+│             PostgreSQL │ Transcripts │ Scores │ Prices      │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Analytics / Consumption                     │
+│          Streamlit Dashboard │ Jupyter │ SQL Queries        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Technology Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| **Ingestion** | Python, yt-dlp, Requests, Scrapy |
+| **Processing** | OpenAI Whisper, FinBERT, spaCy, pandas |
+| **Storage** | PostgreSQL, S3 (audio files) |
+| **Orchestration** | Cron, GitHub Actions |
+| **Infrastructure** | Docker, Vercel (dashboard) |
+| **Visualization** | Streamlit, Plotly |
+
+## Implementation Details
+
+**Batch vs Streaming:** Batch processing triggered by new speech releases (typically weekly). Fed communications are scheduled events, so real-time processing isn't necessary.
+
+**Schema Design:** Normalized relational schema—speeches table linked to sentences (with timestamps), sentiment scores, and market data snapshots. Enables flexible aggregation at speech, paragraph, or sentence level.
+
+**Handling Duplicates:** Each speech has a unique identifier (date + speaker + event_type). Idempotent upserts prevent duplicate processing on retries.
+
+**Scheduling Strategy:** GitHub Actions workflow runs daily, checking for new speeches. Processing only triggers when new content is detected.
+
+**Tradeoffs:** Accepted Whisper's higher compute cost (vs cloud STT APIs) for better accuracy on financial terminology and ability to run locally.
+
+## Data Characteristics
+
+| Metric | Value |
+|--------|-------|
+| **Volume** | 50+ speeches, ~2-3 new/month |
+| **Frequency** | Event-driven (Fed calendar) |
+| **Format** | Audio → Text → Structured |
+| **Growth** | Linear (~36 speeches/year) |
+
+## Reliability & Edge Cases
+
+- Handles audio download failures with retry logic and fallback sources
+- Gracefully handles Whisper hallucinations on low-quality audio
+- Market data gaps (holidays) handled with forward-fill logic
+- Sentiment model outputs validated against known hawkish/dovish examples
+- Dashboard caches expensive queries for fast user experience
+
+## Lessons Learned
+
+**What surprised me:** FinBERT's financial domain training made a massive difference vs general sentiment models. "Inflation expectations remain anchored" scores very differently than generic sentiment would suggest.
+
+**What broke:** Early versions tried to correlate raw sentiment with same-day returns. Added proper event study methodology with pre/post windows for meaningful signal extraction.
+
+**What I'd redesign:** Would add more structured feature extraction—forward guidance detection, rate path implications, specific topic classification (inflation, employment, banking).
+
+## Future Improvements
+
+- Add real-time processing for live FOMC press conferences
+- Implement named entity recognition for policy-specific terms
+- Build backtesting framework for trading signal evaluation
+- Add support for ECB, BOE, BOJ speeches for global coverage
+- Deploy as API for integration with trading systems
+
+## Links
+
+- <LinkWithLabel label="GitHub" href="https://github.com/jeffwilliams2" title="GitHub repository" />

@@ -1,0 +1,207 @@
+---
+title: "Why Data Engineers Should Understand Kubernetes"
+description: "Practical Kubernetes concepts for data engineers—from debugging Airflow pods to understanding resource allocation for Spark jobs."
+publishDate: 2025-01-25
+tags:
+  - kubernetes
+  - data-engineering
+  - infrastructure
+  - devops
+category: cloud-infrastructure
+toc: true
+noHero: true
+draft: true
+---
+
+## Context
+
+"I write SQL and Python—why do I need to understand Kubernetes?"
+
+Because your Airflow workers run in pods. Your Spark jobs request resources from the cluster. Your dbt runs in containers. Understanding Kubernetes basics transforms you from someone who files tickets when things break to someone who can debug and fix issues independently.
+
+In this post, I share practical Kubernetes knowledge from deploying a production data platform—focused on what data engineers actually need to know.
+
+## Problem Statement
+
+- **Data source characteristics:** Production data platform with Airflow, Spark, and various Python workers—all running on Kubernetes
+- **Constraints:** Small team without dedicated DevOps, need to debug pipeline failures quickly, balance cost with reliability
+- **Success criteria:** Data engineers can troubleshoot common failures, understand resource allocation, and communicate effectively with platform teams
+
+## Architectural Approach
+
+### High-Level Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Kubernetes Cluster                        │
+├─────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
+│  │   Airflow    │  │    Spark     │  │   dbt Jobs   │      │
+│  │   Pods       │  │   Executors  │  │   Containers │      │
+│  └──────────────┘  └──────────────┘  └──────────────┘      │
+├─────────────────────────────────────────────────────────────┤
+│              Shared Resources (Storage, Networking)          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Why Kubernetes for Data Platforms?
+
+| Benefit | What It Means for Data Engineers |
+|---------|----------------------------------|
+| **Isolation** | Failed Spark job doesn't crash Airflow |
+| **Scaling** | Spin up more workers for heavy loads |
+| **Consistency** | Same container runs in dev and prod |
+| **Resource limits** | One job can't hog all the memory |
+
+### Alternatives Considered
+
+| Approach | Pros | Cons | Why Not Chosen |
+|----------|------|------|----------------|
+| VMs per service | Simple, familiar | Expensive, slow to scale | Cost and flexibility |
+| Serverless (Lambda) | No infra management | Cold starts, time limits | Long-running jobs |
+| Kubernetes | Flexible, scalable | Learning curve | ✓ Chosen |
+
+## Key Design Decisions
+
+### Pods: The Basic Unit
+
+A pod is a running instance of your container. When an Airflow task runs with KubernetesExecutor, it spins up a pod.
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: airflow-task-xyz
+spec:
+  containers:
+  - name: task
+    image: my-airflow:2.7.0
+    resources:
+      requests:
+        memory: "2Gi"
+        cpu: "1"
+      limits:
+        memory: "4Gi"
+        cpu: "2"
+```
+
+**Key concept:** `requests` is what you're guaranteed. `limits` is the maximum. Set these wrong and your jobs either waste resources or get killed.
+
+### Debugging Failed Pods
+
+When a pipeline task fails, here's the debugging workflow:
+
+```bash
+# Find the pod
+kubectl get pods -n airflow | grep my-task
+
+# Check status
+kubectl describe pod my-task-pod -n airflow
+
+# Read logs
+kubectl logs my-task-pod -n airflow
+
+# Common issues:
+# - OOMKilled: Memory limit exceeded
+# - CrashLoopBackOff: Container keeps failing
+# - Pending: Not enough cluster resources
+```
+
+### Resource Allocation for Spark
+
+Spark on Kubernetes needs careful resource planning:
+
+```python
+spark = SparkSession.builder \
+    .config("spark.kubernetes.container.image", "my-spark:3.4") \
+    .config("spark.executor.instances", "10") \
+    .config("spark.executor.memory", "4g") \
+    .config("spark.executor.cores", "2") \
+    .getOrCreate()
+```
+
+**The tradeoff:** More executors = more parallelism, but also more overhead. Fewer, larger executors often perform better for data-heavy workloads.
+
+### Failure Handling
+
+```yaml
+# Kubernetes handles restarts
+spec:
+  restartPolicy: OnFailure
+  backoffLimit: 3  # Retry 3 times before giving up
+```
+
+For Airflow specifically:
+
+```python
+# Airflow handles retries at task level
+@task(retries=3, retry_delay=timedelta(minutes=5))
+def my_task():
+    ...
+```
+
+**Design decision:** Let Kubernetes handle infrastructure failures (node dies). Let Airflow handle application failures (API timeout).
+
+## Tradeoffs & Constraints
+
+**What I didn't optimize for:**
+- Maximum resource utilization (left headroom for bursting)
+- Minimal pod count (preferred smaller pods for isolation)
+
+**Why certain tools were avoided:**
+- Helm charts for everything: Started simple with raw YAML, added Helm only when templating became necessary
+- Istio/service mesh: Overkill for batch workloads—added complexity without proportional benefit
+
+**Cost vs reliability:**
+- Used spot/preemptible nodes for Spark executors (cost savings)
+- Kept Airflow scheduler on stable nodes (reliability)
+
+## What Went Wrong
+
+- **Memory limits too tight:** Set limits based on average usage, not peak. Jobs got OOMKilled during large data days. Learned to monitor P99 memory usage.
+
+- **Ignored pod scheduling:** Assumed Kubernetes would figure it out. Reality: resource-heavy pods got scheduled on the same node and competed. Added anti-affinity rules.
+
+- **Log retention was an afterthought:** Pods die, logs disappear. Needed centralized logging (Loki/ELK) earlier than planned.
+
+- **Secrets management was messy:** Started with Kubernetes secrets in YAML files. Migrated to external secrets manager (AWS Secrets Manager) after security audit.
+
+## Lessons Learned
+
+This experience reinforced the importance of:
+
+- **Understanding the resource model:** Requests vs limits isn't academic—it determines whether your jobs run or get evicted
+- **Centralized logging from day one:** When that Spark executor dies, you need the logs somewhere persistent
+- **Starting with more resources than needed:** It's easier to optimize down than to debug OOMKilled jobs in production
+- **Learning kubectl basics:** Even if DevOps manages the cluster, `kubectl logs` and `kubectl describe` are essential debugging tools
+
+## How I'd Scale This
+
+### At 10× Workload
+- Implement namespace isolation per team/environment
+- Add horizontal pod autoscaling for Airflow workers
+- Introduce node pools optimized for different workload types
+
+### At 100× Workload
+- Multi-cluster architecture for blast radius isolation
+- Advanced scheduling (priority classes, preemption)
+- Service mesh for observability and traffic management
+
+### What I'd Add
+
+| Current | At Scale |
+|---------|----------|
+| kubectl for debugging | Centralized observability (Datadog, Grafana) |
+| Manual resource allocation | Vertical Pod Autoscaler |
+| Single node pool | Specialized pools (memory-optimized, compute-optimized) |
+| Basic monitoring | Cost allocation and chargeback |
+
+## Closing
+
+You don't need to become a Kubernetes expert to be an effective data engineer. But understanding the basics—pods, resources, debugging—transforms your ability to operate in modern data platforms.
+
+The key insight: **Kubernetes is infrastructure, but data engineers touch it constantly.** The time invested in learning the fundamentals pays dividends in faster debugging and better system design.
+
+---
+
+*Have questions about running data platforms on Kubernetes? Reach out on [LinkedIn](https://www.linkedin.com/in/jefferywilliams4) or [GitHub](https://github.com/jeffwilliams2).*

@@ -1,0 +1,155 @@
+---
+title: "Choosing Between ETL and ELT: An Architectural Decision Guide"
+description: "A deep dive into the architectural tradeoffs between ETL and ELT patterns, and why your choice depends on more than just where transformations happen."
+publishDate: 2025-01-15
+tags:
+  - data-engineering
+  - etl
+  - elt
+  - architecture
+category: data-engineering
+toc: true
+noHero: true
+draft: false
+---
+
+## Context
+
+Every data pipeline needs to move data from point A to point B, transforming it along the way. The question of *where* that transformation happens—before or after loading—seems simple, but it has profound implications for cost, flexibility, and operational complexity.
+
+In this post, I walk through the architectural considerations that should drive your ETL vs ELT decision, based on real-world experience building pipelines at scale.
+
+## Problem Statement
+
+- **Data source characteristics:** Multiple upstream systems with varying data quality, schema stability, and update frequencies
+- **Constraints:** Limited budget for infrastructure, small team to maintain pipelines, need to support both analytics and ML use cases
+- **Success criteria:** Data must be queryable within 1 hour of source update, transformations must be auditable, and the system must handle schema evolution gracefully
+
+## Architectural Approach
+
+### High-Level Architecture
+
+```
+ETL Pattern:
+Source → Extract → [Transform in Staging] → Load → Destination
+
+ELT Pattern:
+Source → Extract → Load (Raw) → [Transform in Warehouse] → Curated
+```
+
+### Why This Pattern Matters
+
+The transformation location isn't just a technical detail—it determines:
+
+| Factor | ETL | ELT |
+|--------|-----|-----|
+| **Compute costs** | Separate staging infrastructure | Warehouse compute |
+| **Data lineage** | Lost during transform | Preserved in raw layer |
+| **Flexibility** | Fixed transformations | Re-transformable |
+| **Latency** | Higher (transform first) | Lower (load first) |
+
+### Alternatives Considered
+
+| Approach | Pros | Cons | When to Choose |
+|----------|------|------|----------------|
+| Pure ETL | Data minimized before load, PII scrubbed early | Can't re-transform, requires staging infra | Legacy systems, strict data governance |
+| Pure ELT | Full flexibility, audit trail | Higher storage, raw data exposure | Cloud warehouses, evolving requirements |
+| Hybrid | Balance of both | More complexity | Most real-world scenarios |
+
+## Key Design Decisions
+
+### Storage Choice
+
+**ELT works when your destination has cheap storage and elastic compute.** Cloud data warehouses (Snowflake, BigQuery, Databricks) separate these concerns—storing raw data costs pennies, and you only pay for compute when transforming.
+
+ETL made sense when storage was expensive and warehouse compute was limited. Those constraints rarely apply today.
+
+### Schema Evolution
+
+With ELT, schema changes are manageable:
+
+```sql
+-- Raw data preserves original structure
+SELECT raw_data:new_field::string AS new_field
+FROM bronze.events
+WHERE _ingested_at > '2024-01-01'
+```
+
+With ETL, a new field requires updating the staging transform, testing, and redeploying—before you can even use the data.
+
+### Failure Handling
+
+```python
+# ELT: Load first, validate later
+def elt_pattern(records: list[dict]) -> None:
+    # Always land raw data
+    load_to_bronze(records)
+    
+    # Transform with quality checks
+    try:
+        transform_to_silver()
+    except DataQualityError as e:
+        alert_team(e)
+        # Raw data still available for debugging
+```
+
+The key insight: with ELT, failures don't lose data. You can always re-transform.
+
+## Tradeoffs & Constraints
+
+**What I didn't optimize for:**
+- Real-time streaming (batch was sufficient for hourly freshness)
+- Absolute minimum storage costs (raw data retention is worth the flexibility)
+
+**Why ETL was avoided:**
+- Separate staging infrastructure adds operational burden
+- Transformations become "locked in" and hard to change
+- Debugging requires access to source systems (raw data not preserved)
+
+**The hidden cost of ETL:** When a transformation is wrong, you need to re-extract from source—which may not support historical queries.
+
+## What Went Wrong
+
+- **Underestimated raw data volume:** ELT means storing everything. Had to implement retention policies and lifecycle rules earlier than planned.
+- **Warehouse compute costs spiked:** Naive transformations without proper filtering scanned entire tables. Learned to push down predicates and use incremental models.
+- **PII in raw layer:** Needed to add a pre-load anonymization step for certain fields—a hybrid approach.
+
+## Lessons Learned
+
+This project reinforced the importance of:
+- **Starting with ELT as the default** for modern cloud warehouses—it's more forgiving of changing requirements
+- **Adding ETL components selectively** for data governance (PII), format conversion, or when staging is truly necessary
+- **Building transformation logic in SQL/dbt** rather than Python—lets analysts contribute and reduces operational complexity
+- **Monitoring warehouse costs** from day one—ELT can get expensive without query optimization
+
+## How I'd Scale This
+
+### At 10× Data Volume
+- Implement stricter partitioning on raw tables
+- Add incremental processing for all transformation layers
+- Introduce caching for frequently-used aggregations
+
+### At 100× Data Volume
+- Consider streaming ELT for sub-hour freshness
+- Implement data tiering (hot/warm/cold) in raw layer
+- Add dedicated compute clusters for heavy transform jobs
+
+### Cloud Services I'd Introduce
+
+| Current | At Scale |
+|---------|----------|
+| Single Snowflake warehouse | Separate warehouses per workload |
+| Manual dbt runs | Orchestrated incremental builds |
+| Full table scans | Materialized views for hot paths |
+
+## Closing
+
+The ETL vs ELT debate is really about flexibility vs control. Modern cloud economics favor ELT—storage is cheap, compute is elastic, and the ability to re-transform historical data is invaluable when requirements change.
+
+But it's not binary. The best pipelines are **hybrid**: load raw data for flexibility, but apply targeted transformations early when data governance demands it.
+
+The key insight: **choose ELT by default, add ETL components only when you have specific reasons.**
+
+---
+
+*Have questions about pipeline architecture? Reach out on [LinkedIn](https://www.linkedin.com/in/jefferywilliams4) or [GitHub](https://github.com/jeffwilliams2).*

@@ -1,0 +1,115 @@
+---
+title: Distributed Processing with PySpark on AWS EMR
+description: Ingests, transforms, and aggregates financial transaction data at scale to enable fraud detection and reporting with 40% cost optimization.
+publishDate: 2025-07-15
+draft: true
+---
+
+import LinkWithLabel from '../../../../components/LinkWithLabel.astro';
+
+# Distributed Processing with PySpark on AWS EMR
+
+> **Ingests, transforms, and aggregates financial transaction data at scale to enable fraud detection and reporting with 40% cost optimization.**
+
+## Overview
+
+Financial transaction data grows faster than single-machine processing can handle. This project builds a distributed data pipeline on AWS EMR, processing 10GB+ daily of transaction data for fraud detection and regulatory reporting.
+
+The goal was to design a cost-effective, scalable pipeline that handles variable workloads while minimizing cloud spend through spot instances and right-sizing.
+
+## Goals
+
+- Ingest transaction data from S3 landing zone in batch windows
+- Transform and enrich transactions with reference data (accounts, merchants)
+- Aggregate metrics for fraud scoring and compliance reporting
+- Ensure fault-tolerant processing with checkpoint recovery
+- Minimize costs through spot instances and auto-scaling
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Data Sources                            │
+│         S3 Landing Zone │ Kafka Topics │ Database CDC       │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Ingestion                               │
+│            S3 Events → Step Functions → EMR Submit          │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Transformation                            │
+│     PySpark Jobs │ Broadcast Joins │ Window Aggregations    │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       Storage                                │
+│         S3 (Parquet) │ Raw → Processed → Curated Zones      │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Analytics / Consumption                     │
+│          Athena Queries │ QuickSight │ ML Training          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Technology Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| **Ingestion** | S3 Events, Step Functions, boto3 |
+| **Processing** | Apache Spark 3.x, PySpark |
+| **Storage** | S3, Parquet, Delta Lake |
+| **Orchestration** | Step Functions, Airflow |
+| **Infrastructure** | EMR, EC2 Spot, Terraform |
+| **Monitoring** | CloudWatch, Spark UI, Ganglia |
+
+## Implementation Details
+
+**Batch vs Streaming:** Chose batch processing in hourly windows. Transaction data has inherent latency from source systems, and batch allows for simpler retry logic and cost optimization via spot instances.
+
+**Schema Design:** Three-zone data lake: Raw (preserves source format), Processed (enriched and validated), Curated (aggregated for consumption). Parquet with Snappy compression, partitioned by date.
+
+**Handling Duplicates:** Source transactions include idempotency keys. Processing uses `dropDuplicates()` on transaction_id before writes. Delta Lake's MERGE handles late-arriving corrections.
+
+**Scheduling Strategy:** Step Functions trigger EMR jobs when S3 landing zone receives new files. Jobs run on transient clusters that terminate after completion.
+
+**Tradeoffs:** Accepted higher latency (hourly vs real-time) in exchange for 40% cost savings via spot instances. Master node runs on-demand for stability.
+
+## Data Characteristics
+
+| Metric | Value |
+|--------|-------|
+| **Volume** | 10GB+/day, ~50M transactions |
+| **Frequency** | Hourly batch windows |
+| **Format** | JSON/CSV → Parquet |
+| **Growth** | ~30% annually |
+
+## Reliability & Edge Cases
+
+- Spot instance interruptions handled via EMR managed scaling and checkpointing
+- Failed jobs automatically retry with exponential backoff via Step Functions
+- Data quality checks validate record counts and schema before downstream processing
+- Dead-letter S3 prefix captures malformed records for investigation
+- CloudWatch alarms on job duration and failure rates
+
+## Lessons Learned
+
+**What surprised me:** Spark shuffle operations dominated runtime. Repartitioning data by transaction date before joins cut processing time by 60%.
+
+**What broke:** Initial cluster sizing was too conservative. Jobs ran out of memory on peak days until I implemented auto-scaling with proper memory-to-core ratios.
+
+**What I'd redesign:** Would use Delta Lake from the start for ACID transactions and time travel. Also would implement better data validation before expensive transformations.
+
+## Future Improvements
+
+- Migrate to Delta Lake for ACID transactions and schema evolution
+- Add streaming ingestion path for real-time fraud detection
+- Implement Great Expectations for data quality gates
+- Move to EMR Serverless for better cost optimization
+- Add MLflow for fraud model training and versioning
+
+## Links
+
+- <LinkWithLabel label="GitHub" href="https://github.com/jeffwilliams2" title="GitHub repository" />

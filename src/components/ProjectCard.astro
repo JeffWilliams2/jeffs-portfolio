@@ -1,0 +1,54 @@
+---
+import { Icon } from 'astro-icon/components';
+import { Image } from 'astro:assets';
+
+import { getPublishedOrUpdatedDate } from '@/modules/common';
+import Link from '@/components/Link.astro';
+import { DRAFT_TEXT } from '@/constants/data';
+import { IMAGE_SIZES } from '@/constants/image';
+import { ROUTES } from '@/constants/routes';
+import { formatDate, formatDateIso } from '@/utils/datetime';
+
+import type { Project } from '@/types/project';
+
+import DefaultProjectHeroImage from '@/assets/images/default/default-project-hero-image.jpg';
+
+export interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+
+const { slug, data } = project;
+const { title, description, heroImage, heroAlt, publishDate, updatedDate, draft } = data;
+const projectHeroImage = heroImage ?? DefaultProjectHeroImage;
+
+const { lastAccessDate, isUpdatedDate } = getPublishedOrUpdatedDate({
+  publishDate,
+  updatedDate,
+});
+---
+
+<article>
+  <Image
+    {...IMAGE_SIZES.RESPONSIVE.PROJECT_CARD}
+    src={projectHeroImage}
+    alt={heroAlt}
+    class="aspect-video object-cover rounded-t-box shadow shadow-base-300 mb-2"
+  />
+
+  <h4 class="b-h4 break-words line-clamp-2 mb-0">
+    <Link href={`${ROUTES.PROJECTS}${slug}`} variant="heading">
+      {title}
+      {draft && <sup class="text-sm text-red-500 ml-1">{DRAFT_TEXT}</sup>}
+    </Link>
+  </h4>
+  {description && <p class="text-sm text-captions mb-2">{description}</p>}
+
+  <p class="flex items-center gap-1 text-xs text-captions">
+    <Icon name={isUpdatedDate ? 'mdi:edit-outline' : 'mdi:access-time'} class="w-4 h-4" />
+    <time itemprop="datePublished" datetime={formatDateIso(lastAccessDate)}>
+      {formatDate(lastAccessDate)}
+    </time>
+  </p>
+</article>

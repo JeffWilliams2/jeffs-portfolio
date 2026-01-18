@@ -1,0 +1,255 @@
+---
+title: "Designing Reliable Data Pipelines with Apache Airflow"
+description: "DAGs, operators, and scheduling patterns—architectural decisions for building maintainable orchestration that doesn't wake you up at night."
+publishDate: 2025-02-15
+tags:
+  - airflow
+  - data-engineering
+  - python
+  - orchestration
+category: data-processing
+toc: true
+noHero: true
+draft: true
+---
+
+## Context7
+
+Data pipelines are only as reliable as their orchestration. You can write perfect transformation code, but if it doesn't run on schedule, handle failures gracefully, and alert when things go wrong—it's not production-ready.
+
+Apache Airflow is the most widely-used orchestration tool in data engineering. In this post, I walk through architectural decisions for building Airflow DAGs that are maintainable, observable, and reliable.
+
+## Problem Statement
+
+- **Data source characteristics:** 15+ data sources with different schedules, dependencies, and failure modes—some APIs, some databases, some file drops
+- **Constraints:** Small team, need clear ownership, pipelines must be auditable, and failures need to be actionable
+- **Success criteria:** DAGs run on schedule, failures are detected within minutes, recovery is straightforward, and new team members can understand the system
+
+## Architectural Approach
+
+### High-Level Architecture
+
+```
+Schedule → DAG → Tasks → Operators → External Systems
+   ↓         ↓       ↓
+Trigger   Dependencies  Execution
+```
+
+Airflow is the conductor, not the musician:
+
+| Airflow Does | Airflow Doesn't |
+|--------------|-----------------|
+| Schedule tasks | Process data |
+| Manage dependencies | Store data |
+| Handle retries | Replace Spark/dbt/Python |
+| Provide observability | Run heavy compute |
+
+### Why Airflow?
+
+| Approach | Pros | Cons | Why Chosen/Not |
+|----------|------|------|----------------|
+| Cron + scripts | Simple | No dependencies, no UI | Doesn't scale |
+| Prefect | Modern, Pythonic | Smaller community | Considered |
+| Dagster | Asset-focused | Different paradigm | Good alternative |
+| Airflow | Mature, widely adopted | Complexity | ✓ Chosen for ecosystem |
+
+## Key Design Decisions
+
+### DAG Structure
+
+```python
+from airflow import DAG
+from airflow.operators.python import PythonOperator
+from airflow.operators.empty import EmptyOperator
+from datetime import datetime, timedelta
+
+default_args = {
+    'owner': 'data-engineering',
+    'retries': 2,
+    'retry_delay': timedelta(minutes=5),
+    'email_on_failure': True,
+    'email': ['data-alerts@company.com']
+}
+
+with DAG(
+    dag_id='daily_etl_pipeline',
+    default_args=default_args,
+    description='Daily ETL for sales data',
+    schedule='0 6 * * *',  # 6 AM daily
+    start_date=datetime(2024, 1, 1),
+    catchup=False,
+    tags=['etl', 'sales', 'daily']
+) as dag:
+    
+    start = EmptyOperator(task_id='start')
+    end = EmptyOperator(task_id='end')
+    
+    extract = PythonOperator(
+        task_id='extract_sales',
+        python_callable=extract_sales_data
+    )
+    
+    transform = PythonOperator(
+        task_id='transform_sales',
+        python_callable=transform_sales_data
+    )
+    
+    load = PythonOperator(
+        task_id='load_to_warehouse',
+        python_callable=load_to_snowflake
+    )
+    
+    start >> extract >> transform >> load >> end
+```
+
+**Key principles:**
+- One DAG per logical pipeline
+- Clear naming: `{frequency}_{domain}_{action}`
+- Tags for filtering and organization
+- `catchup=False` unless you specifically need backfills
+
+### Task Design
+
+```python
+# Good: Atomic, idempotent tasks
+@task
+def extract_orders(execution_date: str) -> dict:
+    """Extract orders for a specific date. Can be rerun safely."""
+    orders = api.get_orders(date=execution_date)
+    return {'count': len(orders), 'path': save_to_s3(orders)}
+
+# Bad: Tasks that do too much
+@task
+def do_everything():
+    """Extract, transform, load, and email report."""
+    # If any step fails, you restart everything
+    # No visibility into what succeeded
+    pass
+```
+
+**Task guidelines:**
+- Each task should do one thing
+- Tasks should be idempotent (rerun = same result)
+- Pass small data between tasks (XCom), not dataframes
+- Keep tasks under 1 hour (prefer 5-15 minutes)
+
+### Dependencies and Sensors
+
+```python
+from airflow.sensors.external_task import ExternalTaskSensor
+from airflow.sensors.filesystem import FileSensor
+
+# Wait for upstream DAG to complete
+wait_for_upstream = ExternalTaskSensor(
+    task_id='wait_for_raw_data',
+    external_dag_id='raw_data_ingestion',
+    external_task_id='complete',
+    timeout=3600,  # Fail after 1 hour
+    mode='reschedule'  # Don't block a worker while waiting
+)
+
+# Wait for file to arrive
+wait_for_file = FileSensor(
+    task_id='wait_for_file',
+    filepath='/data/landing/daily_export_{{ ds }}.csv',
+    timeout=7200,
+    mode='reschedule'
+)
+```
+
+### Failure Handling
+
+```python
+from airflow.operators.python import PythonOperator
+from airflow.utils.trigger_rule import TriggerRule
+
+# Alert on any failure
+def send_failure_alert(context):
+    """Called when task fails."""
+    dag_id = context['dag'].dag_id
+    task_id = context['task'].task_id
+    exec_date = context['execution_date']
+    exception = context.get('exception')
+    
+    slack.send_message(
+        f"🚨 Task failed: {dag_id}.{task_id} on {exec_date}\n"
+        f"Error: {exception}"
+    )
+
+transform = PythonOperator(
+    task_id='transform',
+    python_callable=transform_data,
+    on_failure_callback=send_failure_alert
+)
+
+# Cleanup task that runs regardless of upstream success
+cleanup = PythonOperator(
+    task_id='cleanup_temp_files',
+    python_callable=cleanup,
+    trigger_rule=TriggerRule.ALL_DONE  # Run even if upstream failed
+)
+```
+
+## Tradeoffs & Constraints
+
+**What I didn't optimize for:**
+- Sub-minute scheduling (Airflow's scheduler isn't designed for this)
+- Event-driven triggers (used sensors as workaround, but Lambda/Kafka better for true events)
+
+**Why certain patterns were avoided:**
+- Dynamic task generation at runtime: Makes debugging and UI harder
+- Heavy compute in Airflow: Offload to Spark/dbt, use Airflow only for orchestration
+
+**The XCom tradeoff:**
+- XCom is convenient but has size limits
+- Large data should go through S3/database, pass paths in XCom
+
+## What Went Wrong
+
+- **Too many tasks per DAG:** Started with 50+ task DAGs. Hard to debug, slow to render. Learned to split into multiple DAGs with dependencies.
+
+- **Ignored the scheduler:** Didn't understand execution_date vs logical_date. Backfills processed wrong data until we understood the model.
+
+- **Hardcoded connections:** Secrets in DAG code. Had to migrate to Connections and Secrets Backend.
+
+- **No alerting strategy:** First failures went unnoticed for hours. Added Slack webhooks and PagerDuty integration.
+
+## Lessons Learned
+
+This experience reinforced the importance of:
+
+- **Airflow is an orchestrator, not a processor:** Keep tasks lightweight. Heavy lifting happens in external systems (Spark, dbt, cloud functions).
+- **Idempotency is non-negotiable:** Every task should be safely rerunnable. This enables debugging, backfills, and recovery.
+- **Observability from day one:** Logging, alerting, and metrics should be in place before your first production DAG.
+- **Understand the execution model:** `execution_date` refers to the *start* of the interval being processed, not when the DAG runs.
+
+## How I'd Scale This
+
+### At 10× DAGs
+- Implement DAG factories for common patterns
+- Add data quality checks as dedicated tasks
+- Use TaskFlow API for cleaner Python code
+
+### At 100× DAGs
+- Separate Airflow environments (dev/staging/prod)
+- Implement DAG-level SLAs and monitoring
+- Consider Kubernetes executor for isolation and scaling
+
+### What I'd Add
+
+| Current | At Scale |
+|---------|----------|
+| Single scheduler | Multiple schedulers + workers |
+| Local executor | Kubernetes/Celery executor |
+| Manual monitoring | Automated SLA tracking |
+| Email alerts | PagerDuty + Slack + runbooks |
+
+## Closing
+
+Airflow is powerful but opinionated. Understanding its execution model—schedules, dependencies, idempotency—is more important than memorizing operators. The best Airflow DAGs are simple: clear dependencies, atomic tasks, and robust error handling.
+
+The key insight: **Airflow should be boring.** If you're debugging Airflow more than your actual data logic, something is wrong with your DAG design.
+
+---
+
+*Have questions about Airflow architecture? Reach out on [LinkedIn](https://www.linkedin.com/in/jefferywilliams4) or [GitHub](https://github.com/jeffwilliams2).*

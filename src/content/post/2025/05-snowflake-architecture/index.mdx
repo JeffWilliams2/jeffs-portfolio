@@ -1,0 +1,213 @@
+---
+title: "Understanding Snowflake's Architecture for Better Query Performance"
+description: "How Snowflake's separation of storage and compute changes the way you think about data warehousing—and practical optimization strategies."
+publishDate: 2025-02-10
+tags:
+  - snowflake
+  - data-warehouse
+  - architecture
+  - performance
+category: databases
+toc: true
+noHero: true
+draft: true
+---
+
+## Context
+
+Traditional data warehouses forced you to choose: more storage or more compute? Scale up or migrate? Snowflake's architecture fundamentally changed this by separating storage and compute—but understanding *how* this works is key to using it effectively and controlling costs.
+
+In this post, I walk through Snowflake's architecture and the practical implications for query performance and cost management.
+
+## Problem Statement
+
+- **Data source characteristics:** Growing data volumes (50GB → 500GB → 5TB) with unpredictable query patterns—sometimes 100 concurrent users, sometimes 5
+- **Constraints:** Need to control costs while supporting both heavy ETL workloads and ad-hoc analytics queries
+- **Success criteria:** Queries return in seconds (not minutes), costs scale with actual usage, and different workloads don't block each other
+
+## Architectural Approach
+
+### High-Level Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   Cloud Services Layer                       │
+│         (Metadata, Security, Query Optimization)            │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
+│  │ Warehouse A │  │ Warehouse B │  │ Warehouse C │         │
+│  │ (Analytics) │  │   (ETL)     │  │   (BI)      │         │
+│  └─────────────┘  └─────────────┘  └─────────────┘         │
+│                    Compute Layer                             │
+├─────────────────────────────────────────────────────────────┤
+│                    Storage Layer                             │
+│              (Shared, Columnar, Compressed)                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Why This Matters
+
+| Traditional Warehouse | Snowflake |
+|----------------------|-----------|
+| Storage and compute coupled | Independently scalable |
+| Scaling requires downtime | Instant scaling |
+| One workload blocks another | Isolated warehouses |
+| Pay for provisioned capacity | Pay for actual usage |
+
+### Alternatives Considered
+
+| Approach | Pros | Cons | Why Not Chosen |
+|----------|------|------|----------------|
+| Traditional DW (Teradata) | Mature, known | Expensive, coupled | Cost and flexibility |
+| BigQuery | Serverless, simple | Less control over compute | Need workload isolation |
+| Databricks | Great for ML | More complex for pure SQL | Primary use case is analytics |
+| Snowflake | Balanced, flexible | Learning curve | ✓ Chosen |
+
+## Key Design Decisions
+
+### The Three Layers Explained
+
+**Cloud Services Layer:**
+- Handles authentication, metadata, query parsing
+- Caches query results (free repeated queries!)
+- Manages optimization and execution planning
+
+**Compute Layer (Virtual Warehouses):**
+- Independent clusters you create and size
+- Only charged when running queries
+- Can auto-suspend and auto-resume
+
+**Storage Layer:**
+- Data stored in micro-partitions (50-500 MB compressed)
+- Columnar format—only reads columns you need
+- Automatic compression and encryption
+
+### Warehouse Sizing Strategy
+
+```sql
+-- ETL workloads: fewer, larger warehouses
+CREATE WAREHOUSE etl_wh
+  WAREHOUSE_SIZE = 'X-LARGE'
+  AUTO_SUSPEND = 60
+  AUTO_RESUME = TRUE;
+
+-- BI queries: smaller, always available
+CREATE WAREHOUSE bi_wh
+  WAREHOUSE_SIZE = 'SMALL'
+  AUTO_SUSPEND = 300
+  AUTO_RESUME = TRUE;
+
+-- Ad-hoc analytics: medium, quick suspend
+CREATE WAREHOUSE analytics_wh
+  WAREHOUSE_SIZE = 'MEDIUM'
+  AUTO_SUSPEND = 120
+  AUTO_RESUME = TRUE;
+```
+
+**Sizing guidance:**
+
+| Workload | Recommended Size | Auto-Suspend |
+|----------|------------------|--------------|
+| ETL/ELT | Large/X-Large | 60 seconds |
+| BI Dashboards | Small/Medium | 300 seconds |
+| Ad-hoc Analytics | Medium | 120 seconds |
+| Data Science | Large | 60 seconds |
+
+### Query Optimization
+
+```sql
+-- Use clustering for large tables with common filters
+ALTER TABLE events
+  CLUSTER BY (event_date, customer_id);
+
+-- Materialize expensive aggregations
+CREATE MATERIALIZED VIEW daily_metrics AS
+SELECT
+    event_date,
+    COUNT(*) AS event_count,
+    COUNT(DISTINCT customer_id) AS unique_customers
+FROM events
+GROUP BY event_date;
+
+-- Leverage result caching (automatic, but know it exists)
+-- Same query within 24 hours = instant result
+```
+
+### Cost Control
+
+```sql
+-- Set resource monitors
+CREATE RESOURCE MONITOR monthly_budget
+  CREDIT_QUOTA = 1000
+  TRIGGERS ON 75 PERCENT DO NOTIFY
+           ON 90 PERCENT DO SUSPEND
+           ON 100 PERCENT DO SUSPEND_IMMEDIATE;
+
+ALTER WAREHOUSE analytics_wh
+  SET RESOURCE_MONITOR = monthly_budget;
+```
+
+## Tradeoffs & Constraints
+
+**What I didn't optimize for:**
+- Maximum performance regardless of cost (could always add larger warehouses)
+- Real-time streaming (Snowflake is optimized for batch/micro-batch)
+
+**Why certain patterns were avoided:**
+- Multi-cluster warehouses for simple workloads: Added complexity without proportional benefit for our scale
+- Always-on warehouses: Auto-suspend saves significant cost
+
+**The caching tradeoff:**
+- Result cache is free but invalidated on data changes
+- Heavy ETL schedules = less cache benefit
+- Solution: Stagger ETL to preserve cache windows for BI queries
+
+## What Went Wrong
+
+- **Over-sized warehouses:** Started with X-Large for everything. Most queries ran fine on Medium. Right-sizing saved 40% on compute.
+
+- **Poor clustering keys:** Clustered on wrong columns. Queries still scanned entire tables. Learned to cluster on actual filter/join columns.
+
+- **Ignored the query profile:** Spent hours optimizing SQL before looking at the query profile. The profile shows exactly where time is spent—look there first.
+
+- **Auto-suspend too aggressive:** 60-second suspend for BI warehouse meant users waited for resume on every query. Increased to 300 seconds for better UX.
+
+## Lessons Learned
+
+This experience reinforced the importance of:
+
+- **Start small, scale up:** It's easy to increase warehouse size. Harder to realize you've been overpaying for months.
+- **Separate workloads early:** ETL competing with BI queries makes everyone unhappy. Create dedicated warehouses from the start.
+- **Understand micro-partitions:** Pruning only works if your queries can eliminate partitions. Design tables and queries with this in mind.
+- **Monitor cost weekly:** Snowflake makes it easy to spend money. Set up cost monitoring and alerts before it becomes a problem.
+
+## How I'd Scale This
+
+### At 10× Data Volume
+- Implement table clustering for large tables
+- Add materialized views for expensive aggregations
+- Consider multi-cluster warehouses for BI (handle concurrency)
+
+### At 100× Data Volume
+- Separate hot/cold data (different storage tiers)
+- Implement data sharing for cross-team access
+- Add query governance (query tags, timeouts, resource monitors per team)
+
+### What I'd Add
+
+| Current | At Scale |
+|---------|----------|
+| Single warehouse per workload | Multi-cluster for concurrency |
+| Manual cost review | Automated cost alerts and governance |
+| Basic clustering | Search optimization for point lookups |
+| Result cache reliance | Strategic materialized views |
+
+## Closing
+
+Snowflake's architecture isn't just marketing—understanding the three layers changes how you design and optimize. Storage is cheap (keep your data). Compute is elastic (right-size for each workload). The cloud services layer does heavy lifting (leverage caching and optimization).
+
+The key insight: **separation of concerns applies to infrastructure too.** Don't let ETL and BI fight for resources. Don't pay for idle compute. Design with the architecture in mind.
+
+---
+
+*Have questions about Snowflake architecture? Reach out on [LinkedIn](https://www.linkedin.com/in/jefferywilliams4) or [GitHub](https://github.com/jeffwilliams2).*

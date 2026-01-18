@@ -1,0 +1,63 @@
+---
+layout: '../layouts/Page.astro'
+title: 'About'
+description: 'About Jeff Williams - Data Engineer'
+---
+
+import { Image } from 'astro:assets';
+
+import { CONFIG_CLIENT } from '../config/client';
+import { IMAGE_SIZES, TW_SCREENS } from '../constants/image';
+import LinkWithLabel from '../components/LinkWithLabel.astro';
+import Electronics1Image from '../assets/images/all-images/electronics1.jpg';
+
+
+export const { AUTHOR_EMAIL, AUTHOR_GITHUB, AUTHOR_LINKEDIN } = CONFIG_CLIENT;
+
+export const authorEmailHref = `mailto:${AUTHOR_EMAIL}`;
+
+{/* bellow SM image is full width of content so higher resolution image */}
+export const imageSizes = {
+  widths: [TW_SCREENS.XS, TW_SCREENS.SM, TW_SCREENS.MD],
+  sizes: `(max-width: ${TW_SCREENS.XS}px) ${TW_SCREENS.XS}px, (max-width: ${TW_SCREENS.SM}px) ${TW_SCREENS.SM}px, (max-width: ${TW_SCREENS.MD}px) ${TW_SCREENS.MD}px, ${TW_SCREENS.XS}px`,
+};
+
+# About
+
+I'm a data engineer based in Texas. I build data platforms, deploy pipelines, and architect cloud infrastructure. My focus is on systems that are reliable, maintainable, and actually solve business problems.
+
+## Background
+
+I didn't start in tech. I studied finance at UNT, and then worked at a brokerage. That work gave me a front-row ticket to how data flows (or doesn't) through organizations. I kept finding myself more interested in building the systems than using them.
+
+So I went back to school. Graduated with my Masters in Advanced Data Analytics in May 2025. After graduating, I joined a genomics startup as a data engineer where I built production data infrastructure processing multi-modal biomedical data.
+
+## Engineering Philosophy
+
+That experience shaped how I think about engineering:
+
+- **Infrastructure as a product** — it should be documented, observable, and serve its users
+- **Observability as a requirement** — if you can't see it, you can't fix it
+- **Documentation as a deliverable** — the technical solution is only half the job
+
+I presented architecture decisions to executives and learned that you have to be able to explain *why* something matters, not just *how* it works.
+
+## Proficiencies
+
+- **Data Engineering:** ETL/ELT pipelines, Data modeling, Data warehouse design, SQL optimization
+- **Cloud Platforms:** AWS (S3, Glue, Lambda, Redshift, EMR), Snowflake, Databricks
+- **Data Processing:** Apache Spark/PySpark, Apache Airflow, Dagster, dbt, Delta Live Tables
+- **Databases:** PostgreSQL, MySQL, BigQuery, DuckDB, NoSQL
+- **Infrastructure:** Docker, Kubernetes, Git, CI/CD, Terraform
+
+## Outside of Work
+
+When I'm not building data systems, you'll find me coding side projects, hiking, or researching market trends and options strategies.
+
+## Contact
+
+<LinkWithLabel label="Email" href={authorEmailHref} title="Author's email" variant="link" >{AUTHOR_EMAIL}</LinkWithLabel>
+<LinkWithLabel label="GitHub" href={AUTHOR_GITHUB} title="Author GitHub profile" variant="link" />
+<LinkWithLabel label="LinkedIn" href={AUTHOR_LINKEDIN} title="Author LinkedIn profile" variant="link" />
+
+

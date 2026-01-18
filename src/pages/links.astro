@@ -1,0 +1,136 @@
+---
+// must be at top
+import '@/assets/styles/github-markdown.css';
+
+import List from '@/layouts/List.astro';
+import { SELECTORS } from '@/constants/dom';
+import { getPageMetadata } from '@/utils/metadata';
+
+const metadata = getPageMetadata('lists/links');
+
+const { GITHUB_MARKDOWN_BODY_ID } = SELECTORS;
+---
+
+<List {metadata}>
+  <div id={GITHUB_MARKDOWN_BODY_ID} class="markdown-body">
+    <p class="text-lg mb-8">
+      Curated resources for data engineering, cloud infrastructure, and career development. Updated
+      regularly.
+    </p>
+
+    <h2>📚 Documentation (Official)</h2>
+    <ul>
+      <li><a href="https://docs.snowflake.com/" target="_blank">Snowflake Documentation</a></li>
+      <li><a href="https://docs.databricks.com/" target="_blank">Databricks Documentation</a></li>
+      <li><a href="https://airflow.apache.org/docs/" target="_blank">Apache Airflow Docs</a></li>
+      <li><a href="https://docs.getdbt.com/" target="_blank">dbt Documentation</a></li>
+      <li><a href="https://docs.aws.amazon.com/" target="_blank">AWS Documentation</a></li>
+      <li><a href="https://kubernetes.io/docs/" target="_blank">Kubernetes Documentation</a></li>
+    </ul>
+
+    <h2>🎓 Courses & Certifications</h2>
+    <ul>
+      <li>
+        <a href="https://learn.snowflake.com/en/certifications/snowpro-core/" target="_blank"
+          >Snowflake SnowPro Core Study Guide</a>
+      </li>
+      <li>
+        <a href="https://www.databricks.com/learn/certification" target="_blank"
+          >Databricks Certifications</a>
+      </li>
+      <li><a href="https://explore.skillbuilder.aws/" target="_blank">AWS Skill Builder</a></li>
+      <li><a href="https://www.datacamp.com/" target="_blank">DataCamp</a></li>
+    </ul>
+
+    <h2>📖 Books</h2>
+    <ul>
+      <li><strong>Fundamentals of Data Engineering</strong> — Joe Reis & Matt Housley</li>
+      <li><strong>Designing Data-Intensive Applications</strong> — Martin Kleppmann</li>
+      <li><strong>The Data Warehouse Toolkit</strong> — Ralph Kimball</li>
+      <li><strong>Data Pipelines Pocket Reference</strong> — James Densmore</li>
+    </ul>
+
+    <h2>🛠️ Tools & Platforms</h2>
+    <ul>
+      <li>
+        <a href="https://www.snowflake.com/" target="_blank">Snowflake</a> — Cloud data warehouse
+      </li>
+      <li>
+        <a href="https://www.databricks.com/" target="_blank">Databricks</a> — Unified analytics platform
+      </li>
+      <li><a href="https://www.getdbt.com/" target="_blank">dbt</a> — Data transformation tool</li>
+      <li><a href="https://dagster.io/" target="_blank">Dagster</a> — Data orchestration</li>
+      <li>
+        <a href="https://airflow.apache.org/" target="_blank">Apache Airflow</a> — Workflow orchestration
+      </li>
+    </ul>
+
+    <h2>📰 Blogs & Newsletters</h2>
+    <ul>
+      <li>
+        <a href="https://www.startdataengineering.com/" target="_blank">Start Data Engineering</a>
+      </li>
+      <li><a href="https://dataengineering.wiki/" target="_blank">Data Engineering Wiki</a></li>
+      <li>
+        <a href="https://medium.com/tag/data-engineering" target="_blank"
+          >Data Engineering on Medium</a>
+      </li>
+    </ul>
+
+    <h2>🎥 YouTube Channels</h2>
+    <ul>
+      <li>
+        <a href="https://www.youtube.com/@SeattleDataGuy" target="_blank">Seattle Data Guy</a>
+      </li>
+      <li><a href="https://www.youtube.com/@DatawithZach" target="_blank">Data with Zach</a></li>
+      <li>
+        <a href="https://www.youtube.com/@Fireship" target="_blank">Fireship</a> (general dev)
+      </li>
+    </ul>
+  </div>
+</List>
+
+<style is:global>
+  #markdown-body-id {
+    /* set transparent bg-color */
+    @apply !bg-transparent;
+
+    /* fix list style */
+    ul,
+    ol {
+      list-style: revert;
+    }
+  }
+</style>
+
+<script>
+  import { SELECTORS } from '@/constants/dom';
+  import { MODES, THEME_CONFIG } from '@/constants/theme';
+  import { getCurrentMode } from '@/utils/theme';
+
+  import type { ChangeThemeCustomEvent, Mode } from '@/types/constants';
+
+  const { CHANGE_EVENT } = THEME_CONFIG;
+  const { GITHUB_MARKDOWN_BODY_SELECTOR } = SELECTORS;
+
+  const loadGithubTheme = (mode: Mode) => {
+    const markdownBodyElement = document.querySelector(GITHUB_MARKDOWN_BODY_SELECTOR);
+    if (!markdownBodyElement) return;
+
+    if (markdownBodyElement && mode === MODES.dark)
+      markdownBodyElement.setAttribute('data-theme', MODES.dark);
+    else markdownBodyElement.setAttribute('data-theme', MODES.light);
+  };
+
+  // will run only on page load
+  const mode = getCurrentMode();
+  loadGithubTheme(mode);
+
+  // will run on button click
+  document.addEventListener(CHANGE_EVENT, async (event) => {
+    const customEvent = event as ChangeThemeCustomEvent;
+    const { mode } = customEvent.detail.theme;
+
+    loadGithubTheme(mode);
+  });
+</script>

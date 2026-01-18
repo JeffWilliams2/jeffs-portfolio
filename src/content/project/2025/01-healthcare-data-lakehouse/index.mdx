@@ -1,0 +1,117 @@
+---
+title: Healthcare Data Lakehouse
+description: Ingests, transforms, and governs 20+ TB of multi-modal healthcare data to enable unified analytics across EMR, imaging, and genomic sources.
+publishDate: 2025-09-15
+draft: true
+---
+
+import LinkWithLabel from '../../../../components/LinkWithLabel.astro';
+
+# Healthcare Data Lakehouse
+
+> **Ingests, transforms, and governs 20+ TB of multi-modal healthcare data to enable unified analytics across EMR, imaging, and genomic sources.**
+
+## Overview
+
+Healthcare organizations struggle to unify data across disparate systems—EMRs, imaging archives, and genomic sequencers each speak different languages. This project builds an end-to-end data lakehouse that ingests multi-modal healthcare data daily, processes it through a medallion architecture, and exposes curated datasets via APIs and dashboards.
+
+The goal was to design a reliable, scalable platform that handles semi-structured healthcare data while maintaining strict governance and audit requirements.
+
+## Goals
+
+- Ingest EMR records, DICOM imaging, and genomic files from multiple source systems
+- Normalize heterogeneous healthcare data into unified analytical schemas
+- Support historical queries and time-travel for audit compliance
+- Ensure idempotent, fault-tolerant pipeline runs with full replay capability
+- Minimize operational overhead through infrastructure automation
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Data Sources                            │
+│       EMR Systems │ DICOM Servers │ Genomic Files │ APIs    │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Ingestion                               │
+│         Apache Airflow │ 15+ DAGs │ Schema Registry         │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    Transformation                            │
+│     Bronze (Raw) → Silver (Cleaned) → Gold (Curated)        │
+│                   Apache Iceberg Tables                      │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                       Storage                                │
+│              MinIO (S3-compatible) │ Iceberg Catalog        │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Analytics / Consumption                     │
+│       BI Dashboards │ ML Feature Store │ REST APIs          │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Technology Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| **Ingestion** | Apache Airflow, Python, REST APIs |
+| **Processing** | Apache Spark, SQL, pandas |
+| **Storage** | MinIO, Apache Iceberg |
+| **Orchestration** | Airflow, Kubernetes CronJobs |
+| **Infrastructure** | Kubernetes, Docker, Helm |
+| **Governance** | OpenMetadata, Great Expectations |
+| **Monitoring** | Prometheus, Grafana, AlertManager |
+
+## Implementation Details
+
+**Batch vs Streaming:** Chose daily batch ingestion to match source system update patterns and simplify retry logic. Healthcare data doesn't require real-time freshness for analytics use cases.
+
+**Schema Design:** Implemented medallion architecture—Bronze preserves raw data for audit, Silver applies business rules and deduplication, Gold provides dimensional models for self-service analytics.
+
+**Handling Duplicates:** Each record has a composite key (source_system + record_id + extract_timestamp). Iceberg's MERGE INTO handles upserts idempotently.
+
+**Scheduling Strategy:** Airflow DAGs run on staggered schedules based on source system availability. Sensors wait for upstream completion before triggering downstream transformations.
+
+**Tradeoffs:** Accepted higher storage costs (keeping all Bronze data) in exchange for complete audit trail and replay capability.
+
+## Data Characteristics
+
+| Metric | Value |
+|--------|-------|
+| **Volume** | 20+ TB total, ~50GB/day |
+| **Frequency** | Daily batch |
+| **Format** | JSON, DICOM, VCF → Parquet/Iceberg |
+| **Growth** | Linear (~15% annually) |
+
+## Reliability & Edge Cases
+
+- Handles failed runs via Airflow retries with exponential backoff
+- Gracefully skips malformed DICOM files, logging to dead-letter table
+- Supports backfills for missed days using Airflow's catchup mechanism
+- Alerting on pipeline failures via PagerDuty integration
+- Time-travel queries for debugging data issues
+
+## Lessons Learned
+
+**What surprised me:** DICOM metadata is incredibly inconsistent across vendors. Spent 40% of effort on parsing edge cases I didn't anticipate.
+
+**What broke:** Initial schema was too rigid. Had to redesign Silver layer to use semi-structured columns for vendor-specific fields.
+
+**What I'd redesign:** Would implement a formal schema registry from day one, and separate ingestion from transformation into distinct Airflow DAG groups for better isolation.
+
+## Future Improvements
+
+- Add streaming ingestion for real-time vitals monitoring data
+- Implement data quality checks with Great Expectations at each layer
+- Migrate to cloud-managed Iceberg (AWS Glue, Snowflake) for reduced ops burden
+- Add column-level lineage tracking in OpenMetadata
+- Build ML feature store on top of Gold layer
+
+## Links
+
+- <LinkWithLabel label="GitHub" href="https://github.com/jeffwilliams2" title="GitHub profile" />

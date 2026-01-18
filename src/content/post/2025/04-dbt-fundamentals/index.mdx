@@ -1,0 +1,243 @@
+---
+title: "Building Reliable Transformation Layers with dbt"
+description: "How dbt brings software engineering practices to analytics—and the architectural decisions that make dbt projects maintainable at scale."
+publishDate: 2025-02-01
+tags:
+  - dbt
+  - data-engineering
+  - sql
+  - analytics-engineering
+category: data-engineering
+toc: true
+noHero: true
+draft: true
+---
+
+## Context
+
+Before dbt, data transformation meant scattered SQL scripts, manual execution ordering, and documentation that lived in someone's head. When I joined projects with legacy transformation pipelines, I spent more time understanding *what* transformed *what* than actually improving the logic.
+
+dbt changed this by treating SQL transformations like software: version-controlled, tested, documented, and with clear dependencies. In this post, I walk through the architectural decisions that make dbt projects maintainable.
+
+## Problem Statement
+
+- **Data source characteristics:** Raw data landing in Snowflake from multiple sources—Fivetran-synced databases, S3 file loads, and API extracts
+- **Constraints:** Analytics team needs self-service access, transformations must be auditable, and the system must handle schema evolution from upstream sources
+- **Success criteria:** All models tested, all columns documented, clear lineage from source to dashboard, and sub-hour freshness for key metrics
+
+## Architectural Approach
+
+### High-Level Architecture
+
+```
+Raw (Sources) → Staging → Intermediate → Marts → BI Tools
+```
+
+Each layer has a purpose:
+
+| Layer | Purpose | Naming Convention |
+|-------|---------|-------------------|
+| **Sources** | Declare raw tables | `sources.yml` |
+| **Staging** | Clean, rename, type-cast | `stg_{source}_{table}` |
+| **Intermediate** | Business logic, joins | `int_{domain}_{action}` |
+| **Marts** | Consumption-ready facts/dims | `fct_`, `dim_` |
+
+### Why This Pattern?
+
+Layered architecture enables:
+
+1. **Isolation:** Source schema changes only affect staging
+2. **Reusability:** Intermediate models serve multiple marts
+3. **Testing:** Each layer can have appropriate tests
+4. **Debugging:** Trace issues layer by layer
+
+### Alternatives Considered
+
+| Approach | Pros | Cons | Why Not Chosen |
+|----------|------|------|----------------|
+| Single-layer (all in marts) | Simple | No reusability, hard to debug | Unmaintainable at scale |
+| Two-layer (staging + marts) | Simpler | Business logic in marts gets complex | Needed intermediate for clarity |
+| Three-layer (staging → intermediate → marts) | Clear separation | More files | ✓ Chosen |
+
+## Key Design Decisions
+
+### Staging: The Foundation
+
+```sql
+-- models/staging/stripe/stg_stripe__payments.sql
+WITH source AS (
+    SELECT * FROM {{ source('stripe', 'payments') }}
+),
+
+renamed AS (
+    SELECT
+        id AS payment_id,
+        customer_id,
+        amount_cents / 100.0 AS amount_dollars,
+        created_at AS payment_timestamp,
+        status
+    FROM source
+)
+
+SELECT * FROM renamed
+```
+
+**Rules:**
+- One staging model per source table
+- Rename to business terminology
+- Type-cast and basic cleaning
+- No joins, no business logic
+
+### Intermediate: Business Logic
+
+```sql
+-- models/intermediate/finance/int_payments_enriched.sql
+WITH payments AS (
+    SELECT * FROM {{ ref('stg_stripe__payments') }}
+),
+
+customers AS (
+    SELECT * FROM {{ ref('stg_stripe__customers') }}
+),
+
+enriched AS (
+    SELECT
+        p.payment_id,
+        p.amount_dollars,
+        p.payment_timestamp,
+        c.customer_segment,
+        c.acquisition_channel
+    FROM payments p
+    LEFT JOIN customers c ON p.customer_id = c.customer_id
+)
+
+SELECT * FROM enriched
+```
+
+Intermediate models handle joins and complex logic—keeping marts clean.
+
+### Testing Strategy
+
+```yaml
+# models/marts/finance/schema.yml
+models:
+  - name: fct_daily_revenue
+    columns:
+      - name: date_day
+        tests:
+          - unique
+          - not_null
+      - name: total_revenue
+        tests:
+          - not_null
+          - dbt_utils.accepted_range:
+              min_value: 0
+
+  - name: dim_customers
+    columns:
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              to: ref('fct_orders')
+              field: customer_id
+```
+
+**Test at every layer:**
+- Staging: Source freshness, basic not-null
+- Intermediate: Referential integrity
+- Marts: Business rules, uniqueness
+
+### Incremental Processing
+
+```sql
+{{
+  config(
+    materialized='incremental',
+    unique_key='event_id',
+    incremental_strategy='merge'
+  )
+}}
+
+SELECT
+    event_id,
+    user_id,
+    event_type,
+    event_timestamp
+FROM {{ ref('stg_events') }}
+
+{% if is_incremental() %}
+WHERE event_timestamp > (SELECT MAX(event_timestamp) FROM {{ this }})
+{% endif %}
+```
+
+**When to use incremental:**
+- Large tables (10M+ rows)
+- Append-mostly data (events, logs)
+- When full refresh takes too long
+
+## Tradeoffs & Constraints
+
+**What I didn't optimize for:**
+- Minimal model count (preferred clarity over fewer files)
+- Maximum reuse (some duplication is okay for readability)
+
+**Why certain patterns were avoided:**
+- Ephemeral models everywhere: Debugging is harder when models don't materialize
+- Over-abstraction with macros: SQL should be readable by analysts
+
+**The testing tradeoff:**
+- 100% test coverage is possible but expensive
+- Focused on: primary keys, foreign keys, critical business rules
+- Skipped: testing every column for not_null
+
+## What Went Wrong
+
+- **Circular dependencies:** Early versions had models referencing each other. dbt caught this, but it meant refactoring. Learned to think in directed graphs from the start.
+
+- **Staging layer became a dumping ground:** Started adding business logic to staging for convenience. Had to refactor back to pure staging + intermediate separation.
+
+- **Incremental models with late-arriving data:** Assumed data arrived in order. Reality: some events arrived days late. Had to add lookback windows.
+
+- **Documentation debt:** Started without `description` fields. Six months later, new team members couldn't understand models. Retrofitting documentation is painful.
+
+## Lessons Learned
+
+This project reinforced the importance of:
+
+- **Staging models are sacred:** Pure renaming and type-casting. No exceptions. This makes source changes manageable.
+- **Test what matters:** Primary keys, foreign keys, business-critical columns. Don't test everything just because you can.
+- **Document as you build:** Adding `description` fields during development is 10x easier than retrofitting.
+- **Naming conventions are non-negotiable:** `stg_`, `int_`, `fct_`, `dim_` prefixes make the DAG readable at a glance.
+
+## How I'd Scale This
+
+### At 10× Models
+- Implement dbt packages for common macros
+- Add CI/CD with state-based selection (`--select state:modified+`)
+- Introduce semantic layer (MetricFlow) for consistent metric definitions
+
+### At 100× Models
+- Split into multiple dbt projects with cross-project references
+- Implement data contracts for interface stability
+- Add data observability (Elementary, Monte Carlo)
+
+### What I'd Add
+
+| Current | At Scale |
+|---------|----------|
+| All models in one project | Domain-based project separation |
+| Manual dbt runs | Orchestrated incremental builds |
+| Basic testing | Anomaly detection (freshness, volume) |
+| dbt docs | Data catalog integration (Atlan, DataHub) |
+
+## Closing
+
+dbt isn't just a tool—it's a philosophy. Treat transformations like software: test them, document them, version them. The upfront investment in structure pays dividends when debugging production issues at 2 AM.
+
+The key insight: **the layers matter more than the code.** Get the architecture right, and individual model changes become easy. Get it wrong, and every change feels risky.
+
+---
+
+*Have questions about dbt architecture? Reach out on [LinkedIn](https://www.linkedin.com/in/jefferywilliams4) or [GitHub](https://github.com/jeffwilliams2).*

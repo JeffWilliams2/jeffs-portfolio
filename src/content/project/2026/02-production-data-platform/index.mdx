@@ -1,0 +1,144 @@
+---
+title: Production Data Platform
+description: Built production data platform at a genomics startup—multi-source ingestion framework, Kubernetes infrastructure, data governance, and analytics serving layer.
+publishDate: 2026-01-15
+heroAlt: Production Data Platform Architecture
+draft: false
+tags: ["KUBERNETES", "AIRFLOW", "DBT", "PYTHON", "SNOWFLAKE"]
+---
+
+import LinkWithLabel from '../../../../components/LinkWithLabel.astro';
+
+# Production Data Platform
+
+> **Mission:** Process 20+ TB daily of healthcare data through a governed, scalable medallion architecture supporting clinical research and analytics.
+
+## Overview
+
+Built end-to-end data platform at a genomics startup handling multiple healthcare data formats (EMR, DICOM, NIfTI) at scale. Designed multi-source ingestion framework, Kubernetes-based infrastructure, and comprehensive data governance with a medallion architecture serving analytics and machine learning workloads.
+
+The platform processes medical imaging, electronic health records, and genomics data through Bronze/Silver/Gold layers, enabling data scientists and researchers to access clean, governed datasets for precision medicine applications.
+
+## Goals
+
+- Ingest multi-format healthcare data (EMR, DICOM, NIfTI) from disparate sources
+- Implement medallion architecture with Apache Iceberg for data lakehouse
+- Build scalable Kubernetes infrastructure for data workloads
+- Establish data governance and cataloging with OpenMetadata
+- Enable self-service analytics for research and clinical teams
+- Ensure HIPAA-compliant data handling and access controls
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Data Sources (20+ TB)                     │
+│           EMR Systems | DICOM Servers | NIfTI Files         │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Ingestion Layer (15+ Airflow DAGs)              │
+│      Python | Apache Spark | Custom Connectors              │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│           BRONZE: Raw Data (Apache Iceberg + MinIO)         │
+│    S3-compatible storage with cross-site replication        │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│        SILVER: Cleansed & Validated (dbt + Snowflake)       │
+│         Data quality checks | Schema enforcement            │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│           GOLD: Analytics-Ready (Snowflake)                 │
+│      Aggregations | Feature stores | Business metrics       │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│            Governance & Observability Layer                  │
+│  OpenMetadata (Catalog) | Prometheus/Grafana (Monitoring)   │
+└─────────────────────────────────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Consumption Layer                           │
+│      Data Science | Research Analytics | Clinical Apps      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Medallion Architecture:**
+- **Bronze**: Raw, immutable data with lineage tracking
+- **Silver**: Validated, deduplicated, schema-enforced datasets
+- **Gold**: Aggregated, business-ready analytics tables
+
+## Technology Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| **Ingestion** | Python, Apache Spark, Airflow (15+ DAGs) |
+| **Processing** | dbt, PySpark, SQL |
+| **Storage** | Apache Iceberg, MinIO (S3-compatible), Snowflake |
+| **Orchestration** | Apache Airflow, Kubernetes CronJobs |
+| **Infrastructure** | Kubernetes (EKS/GKE), Helm, Terraform |
+| **Governance** | OpenMetadata (data catalog & lineage) |
+| **Observability** | Prometheus, Grafana, CloudWatch |
+| **Data Formats** | EMR (HL7/FHIR), DICOM, NIfTI, Parquet |
+
+## Implementation Details
+
+**Multi-Source Ingestion Framework:**
+Built reusable Python framework with connectors for EMR systems (HL7/FHIR), DICOM imaging servers, and genomics file formats. Each connector handles format-specific validation, metadata extraction, and Bronze layer ingestion with full lineage tracking.
+
+**Kubernetes Infrastructure:**
+Deployed on managed Kubernetes (EKS) with dedicated node pools for compute-intensive workloads. Airflow runs as Kubernetes Executor, dynamically spawning pods for each task. Used Helm charts for standardized deployments across dev/staging/production.
+
+**Medallion Architecture with Apache Iceberg:**
+Bronze layer stores raw data with immutable snapshots and time-travel capabilities. Silver layer applies schema evolution, data quality checks via dbt tests, and deduplication. Gold layer provides aggregated, analytics-ready tables optimized for Snowflake queries.
+
+**MinIO Cross-Site Replication:**
+Configured active-active replication between data centers for disaster recovery. Bronze layer objects replicate automatically, ensuring raw data availability even during regional outages.
+
+**Data Governance:**
+OpenMetadata catalogs all datasets with automatic lineage tracking from Airflow DAGs. Implemented role-based access controls and data classification (PII, PHI) for HIPAA compliance.
+
+## Data Characteristics
+
+| Metric | Value |
+|--------|-------|
+| **Volume** | 20+ TB processed |
+| **Frequency** | Batch (daily) + near-real-time streams |
+| **Format** | EMR (HL7/FHIR), DICOM, NIfTI → Parquet/Iceberg |
+| **DAGs** | 15+ Airflow orchestration pipelines |
+| **Growth** | Linear growth with new clinical trials |
+
+## Reliability & Edge Cases
+
+- **Idempotent ingestion:** Each DAG supports reruns without duplicate data using unique identifiers and Iceberg's ACID guarantees
+- **DICOM validation:** Medical imaging files validated against standard schemas before Bronze ingestion
+- **Schema evolution:** Iceberg supports schema changes without breaking downstream consumers
+- **Backfill support:** Historical data loads handled via parameterized Airflow DAGs
+- **Alerting:** Prometheus alerts on pipeline failures, data quality violations, and SLA breaches
+- **Data quality gates:** dbt tests enforce constraints before promoting Bronze → Silver → Gold
+- **Cross-site failover:** MinIO replication enables disaster recovery with RPO < 15 minutes
+
+## Lessons Learned
+
+**Kubernetes learning curve:** Initial deployment complexity required investing in Helm charts and GitOps patterns (ArgoCD), but paid dividends in standardization and reproducibility across environments.
+
+**Iceberg vs Delta Lake:** Chose Apache Iceberg for better schema evolution support and time-travel capabilities critical for healthcare data auditing.
+
+**OpenMetadata integration:** Automated lineage tracking from Airflow required custom operators but eliminated manual documentation overhead and improved data discoverability.
+
+**Medical data complexity:** Each healthcare format (HL7, FHIR, DICOM) has unique validation requirements. Building format-specific connectors upfront reduced downstream data quality issues.
+
+## Future Improvements
+
+- Implement real-time streaming for critical EMR events using Apache Kafka
+- Add automated PII detection and masking for non-production environments
+- Expand dbt test coverage to include statistical anomaly detection
+- Integrate with Trino for federated queries across Bronze/Silver/Gold
+- Build self-service data product templates for research teams
+- Implement cost attribution and optimization via Kubernetes resource quotas
+- Add automated compliance reporting for HIPAA audit trails
+

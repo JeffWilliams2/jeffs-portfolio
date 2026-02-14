@@ -1,0 +1,150 @@
+---
+title: Real-Time Stock Market Data Pipeline
+description: Engineered end-to-end streaming pipeline capturing live stock data from Finnhub API via Kafka producers, landing raw events in MinIO (S3-compatible storage).
+publishDate: 2026-01-20
+heroAlt: Real-Time Stock Market Data Pipeline Architecture
+draft: false
+tags: ["KAFKA", "DBT", "SNOWFLAKE", "AIRFLOW", "PYTHON", "DOCKER"]
+---
+
+import LinkWithLabel from '../../../../components/LinkWithLabel.astro';
+
+# Real-Time Stock Market Data Pipeline
+
+> **Value statement:** Stream live stock market data through Kafka-based medallion architecture for real-time financial analytics and Power BI dashboards.
+
+## Overview
+
+Built distributed streaming data pipeline capturing real-time stock market data from Finnhub API. System ingests live market events via Kafka producers, processes through medallion architecture (Bronze/Silver/Gold) using dbt transformations in Snowflake, and serves analytics dashboards through Power BI. Orchestrated via Airflow DAGs with automated ingestion and monitoring.
+
+The pipeline handles high-throughput financial data streams, implements schema enforcement and data quality checks, and provides sub-minute latency for trading analytics and market research use cases.
+
+## Goals
+
+- Stream real-time stock data from Finnhub API at scale
+- Implement event-driven architecture with Kafka producers/consumers
+- Build medallion data lakehouse with MinIO (S3-compatible storage)
+- Transform raw events into analytics-ready datasets with dbt
+- Orchestrate ingestion and monitoring via Airflow DAGs
+- Serve dashboards for real-time market analysis
+- Ensure fault tolerance and exactly-once delivery semantics
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Finnhub API                               │
+│              Live Stock Market WebSocket/REST                │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Kafka Producers (Python)                        │
+│        Real-time event capture with schema validation       │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                Apache Kafka Cluster                          │
+│       Distributed event streaming with partitioning         │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│           BRONZE: Raw Events (MinIO S3)                     │
+│         Immutable event store with time partitioning        │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│        SILVER: Cleansed Data (dbt + Snowflake)              │
+│     Deduplication | Schema enforcement | Validation         │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│         GOLD: Analytics Tables (Snowflake)                  │
+│       Aggregations | Time-series | Market indicators        │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Power BI Dashboards                             │
+│      Real-time market analytics and trading insights        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Technology Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| **Data Source** | Finnhub API (WebSocket + REST) |
+| **Ingestion** | Python Kafka Producers, Confluent Kafka |
+| **Streaming** | Apache Kafka (multi-broker cluster) |
+| **Storage** | MinIO (S3-compatible object storage) |
+| **Processing** | dbt (data transformations), Snowflake |
+| **Orchestration** | Apache Airflow (scheduled DAGs) |
+| **Visualization** | Power BI (real-time dashboards) |
+| **Infrastructure** | Docker, Docker Compose |
+
+## Implementation Details
+
+**Kafka Producer Architecture:**
+Built Python-based Kafka producers using `confluent-kafka` library to ingest live stock data from Finnhub WebSocket API. Implemented error handling, retry logic, and schema validation before publishing to Kafka topics. Each producer maintains connection pooling and graceful shutdown handling.
+
+**Event Streaming with Kafka:**
+Configured multi-broker Kafka cluster with topic partitioning based on stock symbols for parallel processing. Implemented exactly-once semantics using idempotent producers and transactional consumers. Kafka Connect used for continuous consumption into MinIO Bronze layer.
+
+**Medallion Architecture:**
+- **Bronze Layer**: Raw JSON events stored in MinIO with time-based partitioning (YYYY/MM/DD/HH). Immutable event store preserving original API responses.
+- **Silver Layer**: dbt models cleanse data by removing duplicates, enforcing schemas, and validating business rules (e.g., non-negative prices, valid timestamps).
+- **Gold Layer**: Aggregated analytics tables including OHLC (Open-High-Low-Close) candles, moving averages, volume indicators, and correlation matrices.
+
+**Airflow Orchestration:**
+Built Airflow DAGs for:
+- System health monitoring and alerting
+- Backfill jobs for missed events
+- Automated Bronze → Silver → Gold promotions
+- Data quality checks and SLA monitoring
+
+**Power BI Integration:**
+Connected Power BI to Snowflake Gold layer using DirectQuery for near-real-time dashboard updates. Dashboards display market trends, portfolio analytics, and trading signals.
+
+## Data Characteristics
+
+| Metric | Value |
+|--------|-------|
+| **Event Volume** | ~10K+ events/minute during market hours |
+| **Latency** | Sub-minute end-to-end (API → Dashboard) |
+| **Symbols Tracked** | 100+ stocks and indices |
+| **Data Format** | JSON events → Parquet/Snowflake tables |
+| **Retention** | Bronze: 2 years | Silver/Gold: 5 years |
+
+## Reliability & Edge Cases
+
+- **Kafka replication factor 3:** Ensures no data loss during broker failures
+- **Idempotent producers:** Prevents duplicate events during retries
+- **Schema evolution:** Avro/JSON schema registry for backward compatibility
+- **API rate limiting:** Exponential backoff and request queuing
+- **Connection resilience:** Automatic reconnection to Finnhub WebSocket
+- **Monitoring:** Prometheus metrics for lag, throughput, and error rates
+- **Alerting:** PagerDuty integration for pipeline failures and SLA breaches
+
+## Lessons Learned
+
+**Kafka partitioning strategy:** Initial round-robin partitioning caused uneven load distribution. Switched to stock symbol-based partitioning which improved parallel processing and reduced consumer lag.
+
+**MinIO vs S3:** Chose MinIO for local development and cost reduction while maintaining S3 API compatibility. Production deployment can seamlessly migrate to AWS S3.
+
+**dbt incremental models:** Implemented incremental models with merge strategies to handle late-arriving events and out-of-order timestamps common in financial data streams.
+
+**Power BI DirectQuery limitations:** DirectQuery mode has query timeout constraints. Added Snowflake materialized views to pre-aggregate heavy computations for dashboard performance.
+
+## Future Improvements
+
+- Add Apache Flink for complex event processing (CEP) and pattern detection
+- Implement machine learning models for price prediction and anomaly detection
+- Expand to cryptocurrency markets and alternative data sources
+- Add real-time alerting for trading signals and portfolio thresholds
+- Migrate to managed Kafka (Confluent Cloud/MSK) for production scale
+- Implement data lineage tracking with Apache Atlas or OpenMetadata
+- Add A/B testing framework for trading strategy backtesting
+
+
+
+
+

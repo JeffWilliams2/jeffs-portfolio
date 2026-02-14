@@ -1,0 +1,169 @@
+---
+title: AWS EMR Big Data Processing Pipeline
+description: Distributed data processing on AWS EMR with PySpark for large-scale financial data analysis. Features S3 integration, cost optimization through spot instances, and scalable cluster configuration.
+publishDate: 2026-01-30
+heroAlt: AWS EMR Spark Pipeline Architecture
+draft: false
+tags: ["SPARK", "PYSPARK", "AWS", "EMR", "S3"]
+---
+
+import LinkWithLabel from '../../../../components/LinkWithLabel.astro';
+
+# AWS EMR Big Data Processing Pipeline
+
+> **Value statement:** Built scalable distributed data processing system on AWS EMR handling large-scale financial datasets with PySpark, achieving 40% cost reduction through spot instances.
+
+## Overview
+
+Designed and deployed big data processing pipeline on AWS EMR (Elastic MapReduce) using PySpark for analyzing large-scale financial datasets. System processes 10GB+ daily transaction data with optimized cluster configuration, S3 data lake integration, and cost-efficient spot instance strategies.
+
+The pipeline demonstrates advanced Spark optimization techniques including partitioning strategies, broadcast joins, and adaptive query execution. Reduced AWS infrastructure costs by 40% while processing 10GB+ daily financial data through intelligent spot instance configuration and cluster auto-scaling.
+
+## Goals
+
+- Process large-scale financial transaction data (10GB+ daily) with PySpark
+- Build scalable EMR cluster architecture with auto-scaling capabilities
+- Integrate with S3 data lake for cost-effective storage
+- Optimize Spark jobs for performance and resource utilization
+- Reduce infrastructure costs through spot instance strategies
+- Implement fault-tolerant processing with checkpointing
+- Enable distributed computing patterns for parallel data processing
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                   Data Sources                               │
+│         Transaction Systems | Financial APIs | Files        │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│              S3 Data Lake (Landing Zone)                     │
+│       Raw CSV/Parquet files with date partitioning          │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│              AWS EMR Cluster                                 │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │         Master Node (On-Demand)                       │  │
+│  │   Spark Driver | YARN ResourceManager | Hive Metastore│ │
+│  └──────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │         Core Nodes (Mix: On-Demand + Spot)           │  │
+│  │    HDFS Storage | Spark Executors | Data Locality    │  │
+│  └──────────────────────────────────────────────────────┘  │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │         Task Nodes (Spot Instances)                   │  │
+│  │  Spark Executors (compute only) | Auto-scaling Group │  │
+│  └──────────────────────────────────────────────────────┘  │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│       PySpark Transformations & Aggregations                 │
+│  Filtering | Joins | Window Functions | Partitioning        │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│         S3 Data Lake (Processed Zone)                        │
+│      Optimized Parquet with Snappy compression              │
+└──────────────────────────┬──────────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Analytics & Consumption                         │
+│      Athena Queries | QuickSight | ML Models                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Technology Stack
+
+| Layer | Technologies |
+|-------|--------------|
+| **Compute** | AWS EMR 6.x, Apache Spark 3.x |
+| **Processing** | PySpark, Spark SQL, Spark DataFrames |
+| **Storage** | Amazon S3 (data lake), EMRFS |
+| **Formats** | Parquet (Snappy compression), CSV |
+| **Orchestration** | AWS Step Functions, EventBridge |
+| **Monitoring** | CloudWatch, Spark UI, Ganglia |
+| **Cost Optimization** | EC2 Spot Instances, Auto-scaling |
+| **Infrastructure** | Terraform, AWS CLI |
+
+## Implementation Details
+
+**EMR Cluster Configuration:**
+- **Master Node**: m5.xlarge (on-demand) for reliability and YARN ResourceManager
+- **Core Nodes**: 2x r5.2xlarge (on-demand) for HDFS and guaranteed capacity
+- **Task Nodes**: 3-10x r5.xlarge (spot instances with 70% discount) for elastic compute
+- **Auto-scaling**: CloudWatch metrics trigger scale-out/in based on YARN pending memory
+- **Spot Strategy**: Mixed instance types (r5.xlarge, m5.2xlarge) for spot diversity and availability
+
+**PySpark Transformations on EMR Cluster:**
+Built distributed data processing jobs leveraging:
+- **Broadcast joins**: Small dimension tables (<200MB) broadcast to executors for efficient joins
+- **Partitioning strategies**: Repartition by date and customer_id for parallel processing
+- **Window functions**: Calculate running totals, rankings, moving averages per partition
+- **Caching**: Persist frequently accessed DataFrames in memory for iterative algorithms
+- **Columnar storage**: Converted CSV to Parquet reducing storage by 75% and query time by 60%
+
+**S3 Data Lake Integration:**
+- **Landing zone**: Raw CSV files partitioned by `year/month/day`
+- **Processed zone**: Transformed Parquet files with Snappy compression
+- **Archive zone**: Cold data moved to S3 Glacier after 90 days
+- **EMRFS consistency view**: Ensures read-after-write consistency for S3 operations
+
+**Spot Instance Configuration (40% Cost Reduction):**
+Implemented intelligent spot instance strategy:
+- Task nodes run on spot (70-80% discount vs on-demand)
+- Spot fleet with multiple instance types for availability
+- Graceful decommissioning with 2-minute interruption handling
+- Checkpointing to S3 prevents work loss on spot terminations
+- Monthly savings: ~$2,400 → $1,440 (40% reduction)
+
+**Partitioning and Optimization Strategies:**
+- **Dynamic partitioning**: Automatically partition output by date columns
+- **Bucketing**: Bucketed by customer_id for efficient joins and aggregations
+- **Adaptive Query Execution (AQE)**: Enabled for runtime optimization of joins and skew handling
+- **Broadcast threshold tuning**: Increased from 10MB to 200MB for larger dimension tables
+- **Executor configuration**: 4 cores/executor, 12GB memory, dynamic allocation enabled
+
+## Data Characteristics
+
+| Metric | Value |
+|--------|-------|
+| **Daily Volume** | 10GB+ transaction data |
+| **Total Records** | 100M+ rows processed monthly |
+| **File Format** | CSV (source) → Parquet (processed) |
+| **Compression** | Snappy (3:1 ratio) |
+| **Processing Time** | 45 minutes (full daily batch) |
+| **Parallelism** | 200 partitions, 40-80 executors |
+
+## Reliability & Edge Cases
+
+- **Spot instance interruptions**: Checkpointing to S3 every 5 minutes prevents data loss
+- **Task node failures**: YARN reschedules failed tasks on healthy nodes automatically
+- **Data skew handling**: AQE detects and repartitions skewed data during joins
+- **Schema evolution**: Spark's schema merging handles new columns gracefully
+- **Duplicate handling**: Deduplication using `dropDuplicates()` with composite keys
+- **CloudWatch alarms**: Alert on cluster failures, high CPU, memory pressure
+- **EMR managed scaling**: Automatic scale-out when YARN pending capacity > 75%
+
+## Lessons Learned
+
+**Spot instance diversity:** Initially used single instance type (r5.2xlarge) which faced frequent interruptions. Switching to mixed fleet (r5.xlarge + m5.2xlarge) improved availability by 95%.
+
+**Parquet vs CSV:** Converting to Parquet reduced storage costs by 75% and query times by 60%. Columnar format enables efficient predicate pushdown and column pruning in Spark.
+
+**Executor tuning is critical:** Over-allocated executors (8 cores each) caused excessive GC overhead. Reducing to 4 cores/executor with more executors improved throughput by 40%.
+
+**S3 list performance:** Large S3 prefixes (>1000 objects) caused slow Spark job startups. Implemented daily partitioning which improved listing performance 10x.
+
+## Future Improvements
+
+- Migrate to EMR Serverless for truly serverless compute (no cluster management)
+- Add Apache Iceberg for ACID transactions and time-travel queries
+- Implement Delta Lake for upserts and CDC patterns
+- Add Spark Streaming for near-real-time processing
+- Integrate with AWS Glue Data Catalog for centralized metadata
+- Add Great Expectations for data quality validation in Spark jobs
+- Implement cost attribution with S3 tagging and CloudWatch cost metrics
+- Add Spark performance monitoring with Ganglia and custom metrics
+

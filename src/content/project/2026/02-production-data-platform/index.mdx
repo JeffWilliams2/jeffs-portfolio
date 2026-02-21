@@ -2,58 +2,61 @@
 title: Production Data Platform
 description: Built production data platform at a genomics startup—multi-source ingestion framework, Kubernetes infrastructure, data governance, and analytics serving layer.
 publishDate: 2026-01-15
+heroImage: ./_images/hero.png
 heroAlt: Production Data Platform Architecture
 draft: false
-tags: ["KUBERNETES", "AIRFLOW", "DBT", "PYTHON", "SNOWFLAKE"]
+tags: ["KUBERNETES", "AIRFLOW", "DBT", "PYTHON", "SNOWFLAKE", "PYSPARK"]
 ---
 
 import LinkWithLabel from '../../../../components/LinkWithLabel.astro';
 
 # Production Data Platform
 
-> **Mission:** Process 20+ TB daily of healthcare data through a governed, scalable medallion architecture supporting clinical research and analytics.
+> **One-line value statement:** Process 20+ TB of healthcare data through a governed, scalable medallion architecture supporting clinical research and analytics.
 
 ## Overview
 
-Built end-to-end data platform at a genomics startup handling multiple healthcare data formats (EMR, DICOM, NIfTI) at scale. Designed multi-source ingestion framework, Kubernetes-based infrastructure, and comprehensive data governance with a medallion architecture serving analytics and machine learning workloads.
+Built and maintained the data platform as the primary data engineer on a small platform team at a genomics startup handling multiple healthcare data sources at scale—OpenNeuro neuroimaging repositories, federal datasets requiring formal data use agreements and PII handling, and HCUP hospitalization data via bulk ingestion. Designed and implemented the multi-source ingestion framework, contributed to Kubernetes infrastructure, and owned data governance with a medallion architecture serving analytics and machine learning workloads.
 
-The platform processes medical imaging, electronic health records, and genomics data through Bronze/Silver/Gold layers, enabling data scientists and researchers to access clean, governed datasets for precision medicine applications.
+The platform processes neuroimaging data (NIfTI/BIDS from OpenNeuro, DICOM from research collaborators), federal health records via FHIR R4 resources with ICD-10 coded diagnoses, and HCUP discharge/encounter datasets through Bronze/Silver/Gold layers, enabling data scientists and researchers to access clean, governed datasets for precision medicine applications.
 
 ## Goals
 
-- Ingest multi-format healthcare data (EMR, DICOM, NIfTI) from disparate sources
-- Implement medallion architecture with Apache Iceberg for data lakehouse
-- Build scalable Kubernetes infrastructure for data workloads
+- Ingest multi-format healthcare data (DICOM, NIfTI/BIDS, FHIR R4, CSV) from research imaging partners, OpenNeuro, federal repositories, and HCUP
+- Implement medallion architecture (Bronze/Silver/Gold) with Apache Iceberg for open-source data lakehouse
+- Build scalable on-prem Kubernetes infrastructure with MinIO for S3-compatible object storage
+- Design Kimball star schema dimensional models as consumption layer for BI and analytics
 - Establish data governance and cataloging with OpenMetadata
 - Enable self-service analytics for research and clinical teams
-- Ensure HIPAA-compliant data handling and access controls
+- Ensure HIPAA-compliant data handling, de-identification, and access controls
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    Data Sources (20+ TB)                     │
-│           EMR Systems | DICOM Servers | NIfTI Files         │
+│  OpenNeuro | Research DICOM | Federal Repos | HCUP Data     │
 └──────────────────────────┬──────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │              Ingestion Layer (15+ Airflow DAGs)              │
-│      Python | Apache Spark | Custom Connectors              │
+│  Python | PySpark | Format-Specific Connectors | Validation │
 └──────────────────────────┬──────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │           BRONZE: Raw Data (Apache Iceberg + MinIO)         │
-│    S3-compatible storage with cross-site replication        │
+│    DICOM, NIfTI/BIDS, FHIR R4 (JSON), CSV → S3 storage    │
 └──────────────────────────┬──────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
-│        SILVER: Cleansed & Validated (dbt + Snowflake)       │
-│         Data quality checks | Schema enforcement            │
+│        SILVER: Cleansed & Validated (dbt + PySpark)         │
+│   Data quality checks | Schema enforcement | BIDS          │
+│   conformance | De-identification                          │
 └──────────────────────────┬──────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │           GOLD: Analytics-Ready (Snowflake)                 │
-│      Aggregations | Feature stores | Business metrics       │
+│    Kimball Star Schema | Dimensional Models | BI Layer      │
 └──────────────────────────┬──────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
@@ -68,77 +71,248 @@ The platform processes medical imaging, electronic health records, and genomics 
 ```
 
 **Medallion Architecture:**
-- **Bronze**: Raw, immutable data with lineage tracking
-- **Silver**: Validated, deduplicated, schema-enforced datasets
-- **Gold**: Aggregated, business-ready analytics tables
+- **Bronze**: Raw, immutable data with lineage tracking — DICOM imaging, NIfTI/BIDS neuroimaging, FHIR R4 resources, CSV extracts
+- **Silver**: Validated, deduplicated, schema-enforced, and de-identified datasets
+- **Gold**: Kimball star schema dimensional models optimized for BI and analytics consumption
 
 ## Technology Stack
 
 | Layer | Technologies |
 |-------|--------------|
-| **Ingestion** | Python, Apache Spark, Airflow (15+ DAGs) |
-| **Processing** | dbt, PySpark, SQL |
-| **Storage** | Apache Iceberg, MinIO (S3-compatible), Snowflake |
-| **Orchestration** | Apache Airflow, Kubernetes CronJobs |
-| **Infrastructure** | Kubernetes (EKS/GKE), Helm, Terraform |
+| **Ingestion** | Python, PySpark, Airflow (15+ DAGs) |
+| **Processing** | PySpark, dbt, SQL |
+| **Storage** | Apache Iceberg, MinIO (S3-compatible), PostgreSQL, Snowflake |
+| **Orchestration** | Apache Airflow (PostgreSQL backend), Kubernetes CronJobs |
+| **Infrastructure** | Kubernetes (on-prem), Helm, Docker |
 | **Governance** | OpenMetadata (data catalog & lineage) |
-| **Observability** | Prometheus, Grafana, CloudWatch |
-| **Data Formats** | EMR (HL7/FHIR), DICOM, NIfTI, Parquet |
+| **Observability** | Prometheus, Grafana (99.5% uptime monitoring) |
+| **Data Formats** | DICOM, NIfTI/BIDS, FHIR R4 (JSON), CSV, Parquet |
 
 ## Implementation Details
 
 **Multi-Source Ingestion Framework:**
-Built reusable Python framework with connectors for EMR systems (HL7/FHIR), DICOM imaging servers, and genomics file formats. Each connector handles format-specific validation, metadata extraction, and Bronze layer ingestion with full lineage tracking.
+Built reusable Python framework with format-specific connectors for four source categories:
+
+- **OpenNeuro** — NIfTI/BIDS neuroimaging datasets downloaded from public repositories, validated against the BIDS specification before Bronze ingestion
+- **Research DICOM imaging** — Medical imaging received from research collaborators and partner imaging facilities, with DICOM tag validation and header anonymization at ingestion time
+- **Federal health data** — FHIR R4 resources (JSON) and CSV extracts obtained under formal data use agreements (DUAs), validated against FHIR R4 resource profiles at ingestion with PII/PHI handling requirements
+- **HCUP** — Hospitalization discharge and encounter datasets with ICD-10 coded diagnoses, received as bulk files from the HCUP Central Distributor under signed DUAs
+
+Airflow DAGs ran on a scheduled basis, scanning each repository for newly available files, ingesting them into the Bronze layer, and triggering downstream processing through Silver and Gold for analysis-ready output. Integrated MinIO S3 provider and Snowflake connectors for end-to-end data flow across 15+ source repositories.
 
 **Kubernetes Infrastructure:**
-Deployed on managed Kubernetes (EKS) with dedicated node pools for compute-intensive workloads. Airflow runs as Kubernetes Executor, dynamically spawning pods for each task. Used Helm charts for standardized deployments across dev/staging/production.
+Architected the data lakehouse on on-prem Kubernetes from scratch, deploying MinIO via Helm for S3-compatible object storage with raw/refined/curated bucket architecture. Configured NodePort and ClusterIP services, persistent storage volumes, and RBAC policies for multi-tenant access. Airflow runs as KubernetesExecutor with a PostgreSQL metadata backend, dynamically spawning pods for each task. Deployed Prometheus/Grafana monitoring stack achieving 99.5% uptime. Used Helm charts for standardized deployments across dev/staging/production environments.
 
 **Medallion Architecture with Apache Iceberg:**
-Bronze layer stores raw data with immutable snapshots and time-travel capabilities. Silver layer applies schema evolution, data quality checks via dbt tests, and deduplication. Gold layer provides aggregated, analytics-ready tables optimized for Snowflake queries.
+Bronze layer captures raw data (DICOM, NIfTI, FHIR resources, CSV) with immutable snapshots and time-travel capabilities. Silver layer applies cleansing, conforming, schema evolution, de-identification, and data quality checks via dbt tests. Gold layer delivers Kimball star schema dimensional models in Snowflake as the consumption layer for BI tools — PySpark jobs transform Silver-layer Iceberg tables and write optimized Parquet files that Snowflake consumes via external tables backed by MinIO.
 
-**MinIO Cross-Site Replication:**
-Configured active-active replication between data centers for disaster recovery. Bronze layer objects replicate automatically, ensuring raw data availability even during regional outages.
+**MinIO Object Storage & Replication:**
+Configured bucket-level replication to a secondary on-prem node for disaster recovery. Bronze layer objects replicate automatically, ensuring raw data availability even during hardware failures.
 
 **Data Governance:**
 OpenMetadata catalogs all datasets with automatic lineage tracking from Airflow DAGs. Implemented role-based access controls and data classification (PII, PHI) for HIPAA compliance.
+
+## OpenNeuro & BIDS Data Ingestion
+
+A significant portion of the platform's neuroimaging data originates from [OpenNeuro](https://openneuro.org/), a free and open platform for sharing BIDS-compliant neuroimaging datasets. **BIDS (Brain Imaging Data Structure)** is a standardized format for organizing and describing neuroimaging and behavioral data — it defines folder hierarchies, file naming conventions, and metadata schemas that make datasets machine-readable and reproducible across research teams.
+
+Understanding and implementing BIDS compliance was critical to the ingestion pipeline. Each OpenNeuro dataset follows the BIDS directory structure:
+
+```
+dataset/
+├── dataset_description.json     # Dataset-level metadata
+├── participants.tsv             # Subject demographics
+├── sub-001/
+│   └── ses-01/
+│       ├── anat/                # Structural MRI (T1w, T2w)
+│       │   ├── sub-001_ses-01_T1w.nii.gz
+│       │   └── sub-001_ses-01_T1w.json
+│       ├── func/                # Functional MRI (BOLD)
+│       │   ├── sub-001_ses-01_task-rest_bold.nii.gz
+│       │   └── sub-001_ses-01_task-rest_events.tsv
+│       └── eeg/                 # EEG recordings
+│           ├── sub-001_ses-01_task-MotorImagery_eeg.edf
+│           └── sub-001_ses-01_task-MotorImagery_events.tsv
+├── sub-002/
+│   └── ...
+```
+
+### BIDS Conversion Pipeline
+
+For datasets not yet in BIDS format, built conversion pipelines using [MNE-BIDS](https://mne.tools/mne-bids/) to standardize raw EEG/neuroimaging data before Bronze layer ingestion. The following shows the group study conversion pattern used for multi-subject EEG datasets:
+
+```python
+from pathlib import Path
+import mne
+from mne.datasets import eegbci
+from mne_bids import (
+    BIDSPath,
+    get_anonymization_daysback,
+    write_raw_bids,
+    print_dir_tree,
+    make_report,
+)
+from mne_bids.stats import count_events
+
+subject_ids = [1, 2]
+
+# Map EEG Motor Movement/Imagery Dataset runs to sequential run numbers
+runs = [4, 8, 12]  # Run #1, #2, #3 of motor imagery task
+run_map = dict(zip(runs, range(1, 4)))
+
+# Fetch raw data for each subject
+for subject_id in subject_ids:
+    eegbci.load_data(subjects=subject_id, runs=runs, update_path=True)
+
+bids_root = Path("/data/bronze/eegmmidb_bids")
+
+# Collect raw objects for anonymization alignment across subjects
+raw_list, bids_list = [], []
+for subject_id in subject_ids:
+    for run in runs:
+        raw_fname = eegbci.load_data(subjects=subject_id, runs=run)[0]
+        raw = mne.io.read_raw_edf(raw_fname)
+        raw.info["line_freq"] = 60  # (60 Hz)
+
+        raw_list.append(raw)
+        bids_list.append(
+            BIDSPath(
+                subject=f"{subject_id:03}",
+                session="01",
+                task="MotorImagery",
+                run=f"{run_map[run]:02}",
+                root=bids_root,
+            )
+        )
+
+# Compute consistent anonymization offset across all subjects
+daysback_min, _ = get_anonymization_daysback(raw_list)
+
+# Write each recording to BIDS format with anonymization
+for raw, bids_path in zip(raw_list, bids_list):
+    write_raw_bids(
+        raw,
+        bids_path,
+        anonymize=dict(daysback=daysback_min + 2117),
+        overwrite=True,
+    )
+```
+
+Key aspects of this conversion pattern for production use:
+
+- **Anonymization alignment** — `get_anonymization_daysback()` computes a consistent date offset across all subjects, preserving longitudinal structure while stripping identifiable timestamps
+- **BIDS path construction** — `BIDSPath` enforces the standard `sub-{id}/ses-{id}/task-{name}/run-{id}` hierarchy automatically
+- **Event preservation** — Annotations embedded in raw EEG files convert to BIDS `_events.tsv` sidecar files automatically
+- **Dataset reporting** — `make_report()` generates human-readable summaries of the full BIDS dataset for governance documentation
+
+### Post-Conversion Validation & Cataloging
+
+After BIDS conversion, the pipeline validates and catalogs the output:
+
+```python
+# Verify BIDS directory structure
+print_dir_tree(bids_root)
+
+# Aggregate event statistics across the full dataset
+event_counts = count_events(bids_root)
+
+# Generate dataset report for OpenMetadata cataloging
+dataset_report = make_report(root=bids_root)
+```
+
+The `count_events()` output feeds directly into OpenMetadata as dataset-level metadata, giving researchers visibility into what tasks, subjects, and event types are available without manually inspecting files.
+
+### Dataset Anonymization
+
+Healthcare neuroimaging data carries significant re-identification risk — recording dates, subject metadata in file headers, and session timestamps can all leak PII. The pipeline implements a dedicated [anonymization step](https://mne.tools/mne-bids/stable/auto_examples/anonymize_dataset.html) that strips identifying information from BIDS datasets before they are promoted beyond the Bronze layer.
+
+The anonymization process operates at two levels:
+
+**1. Header-level anonymization** — Recording dates and subject identifiers embedded in EEG/MRI file headers are shifted or removed during `write_raw_bids()` using the same `daysback` offset pattern shown in the conversion pipeline above. The `get_anonymization_daysback()` function computes a safe range ensuring all shifted dates remain valid, and a single offset is applied consistently across every file in the dataset.
+
+**2. Sidecar metadata scrubbing** — JSON sidecar files (`_eeg.json`, `_T1w.json`) are scanned for fields like `InstitutionName`, `InstitutionAddress`, and `DeviceSerialNumber`. These are either removed or replaced with generic values before promotion to Silver.
+
+**Why this matters for production:**
+
+- **HIPAA Safe Harbor** — Recording dates are classified as one of the 18 PHI identifiers under the HIPAA Safe Harbor de-identification method (§164.514(b)(2)). The `daysback` offset satisfies this standard by shifting all dates while preserving intervals
+- **Longitudinal consistency** — Using `get_anonymization_daysback()` across all subjects ensures that a single patient's sessions remain temporally ordered, which is critical for treatment-response and disease-progression studies
+- **Cross-dataset linkage prevention** — Different `daysback` values per dataset prevent correlating subjects across studies by matching recording timestamps
+- **Audit trail** — The anonymization offset is stored as pipeline metadata in OpenMetadata, so the transformation is traceable without exposing the original dates
+
+**Edge cases handled:**
+
+- **Mixed-date datasets** — Some OpenNeuro datasets contain files recorded years apart. `get_anonymization_daysback()` computes a range that keeps all shifted dates valid (no negative years or dates before the Unix epoch)
+- **Missing date headers** — Files with null or malformed recording dates are flagged and routed to a quarantine path for manual review rather than silently ingested
+- **Federal data with pre-anonymized fields** — Datasets arriving under data use agreements sometimes have dates already redacted or set to sentinel values (e.g., `1900-01-01`). The pipeline detects these and skips re-anonymization to avoid corrupting the data
+- **DICOM tag anonymization** — Even when research collaborators de-identify DICOM files before transfer, residual metadata can persist across dozens of header tags. The pipeline enforces a secondary anonymization pass using a configurable tag allowlist (stripping PatientName, PatientBirthDate, ReferringPhysicianName, InstitutionName, etc.) before writing to Bronze as a defense-in-depth measure
+- **Re-processing idempotency** — Applying anonymization to already-anonymized files produces the same output, preventing date drift on DAG reruns
+
+### Use Cases Enabled
+
+Organizing neuroimaging data into BIDS format at the Bronze layer unlocked several downstream use cases:
+
+- **Meta-analysis pipelines** — BIDS-compliant datasets enable coordinate-based and image-based meta-analyses across studies, following workflows like [ALE and MKDA methods](https://andysbrainbook.readthedocs.io/en/latest/MetaAnalysis/MetaAnalysis_Overview.html) for systematic reviews of neuroimaging literature
+- **Cross-study feature extraction** — Standardized file naming and metadata allow automated feature extraction pipelines to operate across datasets without per-study configuration
+- **Reproducible ML training** — Gold layer feature stores built from BIDS-organized neuroimaging data maintain full provenance from raw scan to training sample
+- **Multi-modal data linking** — Subject identifiers from BIDS `participants.tsv` files are mapped to FHIR Patient resource IDs and HCUP discharge record keys via a Silver-layer crosswalk table, enabling research that combines imaging biomarkers with clinical outcomes
+
+### Resources & References
+
+The following resources informed the BIDS ingestion and anonymization pipeline design:
+
+- [BIDS Specification](https://bids-specification.readthedocs.io/) — Official standard for folder structure, naming conventions, and metadata schemas
+- [MNE-BIDS: EEG to BIDS Conversion](https://mne.tools/mne-bids/stable/auto_examples/convert_eeg_to_bids.html) — Single-subject EEG conversion patterns
+- [MNE-BIDS: Group Study Conversion](https://mne.tools/mne-bids/stable/auto_examples/convert_group_studies.html) — Multi-subject conversion with anonymization alignment (basis for the production pipeline)
+- [MNE-BIDS: Dataset Anonymization](https://mne.tools/mne-bids/stable/auto_examples/anonymize_dataset.html) — De-identification strategies for BIDS datasets containing PHI
+- [Andy's Brain Book: Meta-Analysis Overview](https://andysbrainbook.readthedocs.io/en/latest/MetaAnalysis/MetaAnalysis_Overview.html) — Coordinate-based meta-analysis workflows that consume BIDS-organized datasets
 
 ## Data Characteristics
 
 | Metric | Value |
 |--------|-------|
 | **Volume** | 20+ TB processed |
-| **Frequency** | Batch (daily) + near-real-time streams |
-| **Format** | EMR (HL7/FHIR), DICOM, NIfTI → Parquet/Iceberg |
+| **Frequency** | Batch (daily) |
+| **Format** | DICOM, NIfTI/BIDS, FHIR R4 (JSON), CSV → Parquet/Iceberg |
 | **DAGs** | 15+ Airflow orchestration pipelines |
-| **Growth** | Linear growth with new clinical trials |
+| **Growth** | Linear growth with new clinical trials and OpenNeuro dataset releases |
 
 ## Reliability & Edge Cases
 
 - **Idempotent ingestion:** Each DAG supports reruns without duplicate data using unique identifiers and Iceberg's ACID guarantees
-- **DICOM validation:** Medical imaging files validated against standard schemas before Bronze ingestion
+- **NIfTI/BIDS validation:** Neuroimaging files validated against the BIDS specification before Bronze ingestion; non-conformant files quarantined with validation errors logged
+- **DICOM tag validation:** Imaging files checked for required DICOM tags (StudyInstanceUID, Modality, PatientID) with header anonymization applied at ingestion
+- **FHIR R4 validation:** Federal health resources validated against FHIR R4 resource profiles at ingestion; malformed or non-conformant bundles rejected before Bronze layer
+- **PII anonymization:** Recording dates, institution names, and device identifiers stripped at ingestion time with consistent offsets across longitudinal studies
 - **Schema evolution:** Iceberg supports schema changes without breaking downstream consumers
 - **Backfill support:** Historical data loads handled via parameterized Airflow DAGs
 - **Alerting:** Prometheus alerts on pipeline failures, data quality violations, and SLA breaches
 - **Data quality gates:** dbt tests enforce constraints before promoting Bronze → Silver → Gold
-- **Cross-site failover:** MinIO replication enables disaster recovery with RPO < 15 minutes
+- **Cross-site failover:** MinIO replication to secondary on-prem node enables disaster recovery with RPO < 15 minutes
+- **Data contract enforcement:** Federal and HCUP datasets validated against agreed-upon schemas and DUA terms on arrival, with rejected records quarantined for review
 
 ## Lessons Learned
 
-**Kubernetes learning curve:** Initial deployment complexity required investing in Helm charts and GitOps patterns (ArgoCD), but paid dividends in standardization and reproducibility across environments.
+**Kubernetes learning curve:** Initial deployment complexity required investing in Helm charts and GitOps patterns, but paid dividends in standardization and reproducibility across dev/staging/production environments.
 
-**Iceberg vs Delta Lake:** Chose Apache Iceberg for better schema evolution support and time-travel capabilities critical for healthcare data auditing.
+**Open-source storage layer:** Chose Apache Iceberg over proprietary alternatives for better schema evolution support, time-travel capabilities critical for healthcare data auditing, and vendor independence. Keeping the stack open-source (Iceberg + MinIO + Airflow) avoided lock-in and gave full control over the storage layer.
 
-**OpenMetadata integration:** Automated lineage tracking from Airflow required custom operators but eliminated manual documentation overhead and improved data discoverability.
+**OpenMetadata integration:** Automated lineage tracking from Airflow required custom operators but eliminated manual documentation overhead and improved data discoverability across the team.
 
-**Medical data complexity:** Each healthcare format (HL7, FHIR, DICOM) has unique validation requirements. Building format-specific connectors upfront reduced downstream data quality issues.
+**Snowflake as consumption layer:** Loading transformed data from Iceberg/MinIO into Snowflake via external tables required careful coordination — schema definitions in Snowflake must match Iceberg table evolution, and stage refresh schedules need to align with Gold layer write cadence. The payoff was familiar SQL access for analysts and researchers who didn't need to interact with the lakehouse directly.
+
+**BIDS anonymization trade-offs:** Balancing de-identification with data utility required careful design. Shifting dates too aggressively can break age-at-scan calculations critical for pediatric and aging studies; not shifting enough risks re-identification. Using `get_anonymization_daysback()` across entire datasets struck the right balance for HIPAA compliance without losing clinically relevant temporal relationships.
+
+**Medical data complexity:** Each data source has unique validation and compliance requirements — DICOM imaging files need header validation and tag anonymization across dozens of patient-identifying fields, OpenNeuro NIfTI files need BIDS conformance checking, federal FHIR R4 resources require structure validation against FHIR R4 resource profiles, and HCUP records need ICD-10-CM/PCS code verification against annual CMS code set releases. Building format-specific connectors with validation upfront reduced downstream data quality issues significantly.
+
+**Incident example:** Early in development, a DAG ingesting OpenNeuro datasets silently accepted files with missing `participants.tsv` metadata — downstream joins in the Silver layer produced null demographic columns that propagated into Gold dimensional models before being caught. Added a Bronze-layer validation gate that checks for required BIDS metadata files and rejects incomplete datasets to a quarantine bucket with Slack alerting.
 
 ## Future Improvements
 
-- Implement real-time streaming for critical EMR events using Apache Kafka
-- Add automated PII detection and masking for non-production environments
+- Implement near-real-time ingestion for incoming DICOM studies using Apache Kafka
+- Extend anonymization pipeline with automated PII detection and masking for non-production environments
 - Expand dbt test coverage to include statistical anomaly detection
-- Integrate with Trino for federated queries across Bronze/Silver/Gold
+- Integrate with Trino for federated queries across Bronze/Silver/Gold without moving data
 - Build self-service data product templates for research teams
 - Implement cost attribution and optimization via Kubernetes resource quotas
 - Add automated compliance reporting for HIPAA audit trails
-
+- Support BIDS-Derivatives specification for standardized pipeline output organization

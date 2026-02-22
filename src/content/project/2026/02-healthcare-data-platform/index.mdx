@@ -12,18 +12,18 @@ import LinkWithLabel from '../../../../components/LinkWithLabel.astro';
 
 # Neuroimaging & Healthcare Data Lakehouse Platform
 
-> Process 20+ TB of healthcare data through a governed, scalable medallion architecture supporting clinical research and analytics.
+> Process daily healthcare data through a governed, scalable medallion architecture supporting clinical research and analytics.
 
 ## Overview
 
-Built and maintained the data platform as the primary data engineer on a small platform team at a genomics startup handling multiple healthcare data sources at scale—OpenNeuro neuroimaging repositories, datasets requiring formal data use agreements and PII handling, and HCUP hospitalization data via bulk ingestion. Designed and implemented the multi-source ingestion framework, contributed to Kubernetes infrastructure, and owned data governance with a medallion architecture serving analytics and machine learning workloads.
+Built and maintained the data platform as the data engineer handling multiple healthcare data sources at scale—OpenNeuro neuroimaging repositories, datasets requiring formal data use agreements and PII handling, and hospitalization data via bulk ingestion. Designed and implemented the multi-source ingestion framework, contributed to Kubernetes infrastructure, and owned data governance with a medallion architecture serving analytics and machine learning workloads.
 
-The platform processes neuroimaging data (NIfTI/BIDS from OpenNeuro, DICOM from research collaborators), federal health records via FHIR R4 resources with ICD-10 coded diagnoses, and HCUP discharge/encounter datasets through Bronze/Silver/Gold layers, enabling data scientists and researchers to access clean, governed datasets for precision medicine applications.
+The platform processes neuroimaging data (NIfTI/BIDS from OpenNeuro, DICOM from research collaborators), federal health records via FHIR R4 resources with ICD-10 coded diagnoses, and discharge/EMR datasets through Bronze/Silver/Gold layers, enabling data scientists and researchers to access clean, governed datasets for precision medicine applications.
 
 ## Goals
 
-- Ingest multi-format healthcare data (DICOM, NIfTI/BIDS, FHIR R4, CSV) from research imaging partners, OpenNeuro, federal repositories, and HCUP
-- Implement medallion architecture (Bronze/Silver/Gold) with Apache Iceberg for open-source data lakehouse
+- Ingest multi-format healthcare data (DICOM, NIfTI/BIDS, FHIR R4, CSV) from research imaging partners, OpenNeuro and EMR data
+- Implement medallion architecture (Bronze/Silver/Gold) for open-source data lakehouse
 - Build scalable on-prem Kubernetes infrastructure with MinIO for S3-compatible object storage
 - Design Kimball star schema dimensional models as consumption layer for BI and analytics
 - Establish data governance and cataloging with OpenMetadata
@@ -34,8 +34,8 @@ The platform processes neuroimaging data (NIfTI/BIDS from OpenNeuro, DICOM from 
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Data Sources (20+ TB)                     │
-│  OpenNeuro | Research DICOM | Federal Repos | HCUP Data     │
+│                    Data Sources (10-20+ TB Daily)           │
+│  OpenNeuro | Research Repos | Hospitalization Data          │
 └──────────────────────────┬──────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
@@ -45,27 +45,27 @@ The platform processes neuroimaging data (NIfTI/BIDS from OpenNeuro, DICOM from 
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │           BRONZE: Raw Data (Apache Iceberg + MinIO)         │
-│    DICOM, NIfTI/BIDS, FHIR R4 (JSON), CSV → S3 storage    │
+│    DICOM, NIfTI/BIDS, FHIR R4 (JSON), CSV → S3 storage      │
 └──────────────────────────┬──────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │        SILVER: Cleansed & Validated (dbt + PySpark)         │
-│   Data quality checks | Schema enforcement | BIDS          │
-│   conformance | De-identification                          │
+│   Data quality checks | Schema enforcement | BIDS           │
+│   conformance | De-identification                           │
 └──────────────────────────┬──────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
 │           GOLD: Analytics-Ready (Snowflake)                 │
-│    Kimball Star Schema | Dimensional Models | BI Layer      │
+│             Dimensional Models | BI Layer                   │
 └──────────────────────────┬──────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
-│            Governance & Observability Layer                  │
+│            Governance & Observability Layer                 │
 │  OpenMetadata (Catalog) | Prometheus/Grafana (Monitoring)   │
 └─────────────────────────────────────────────────────────────┘
                            ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                  Consumption Layer                           │
+│                  Consumption Layer                          │
 │      Data Science | Research Analytics | Clinical Apps      │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -274,7 +274,7 @@ The following resources informed the BIDS ingestion and anonymization pipeline d
 | **Frequency** | Batch (daily) |
 | **Format** | DICOM, NIfTI/BIDS, FHIR R4 (JSON), CSV → Parquet/Iceberg |
 | **DAGs** | 15+ Airflow orchestration pipelines |
-| **Growth** | Linear growth with new clinical trials and OpenNeuro dataset releases |
+| **Growth** | Newly and existing changes with new clinical trials and OpenNeuro dataset releases |
 
 ## Reliability & Edge Cases
 

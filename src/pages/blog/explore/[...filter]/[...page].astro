@@ -28,7 +28,12 @@ export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
     return pagination;
   });
 
-  rootPagination.push({ ...rootPagination[0], params: { ...rootPagination[0].params, page: '1' } });
+  if (rootPagination.length > 0) {
+    rootPagination.push({
+      ...rootPagination[0],
+      params: { ...rootPagination[0].params, page: '1' },
+    });
+  }
 
   // prerender tags
   const uniqueTags = getUniqueTags(posts);
@@ -40,7 +45,9 @@ export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
     return pagination;
   });
 
-  tagPagination.push({ ...tagPagination[0], params: { ...tagPagination[0].params, page: '1' } });
+  if (tagPagination.length > 0) {
+    tagPagination.push({ ...tagPagination[0], params: { ...tagPagination[0].params, page: '1' } });
+  }
 
   // prerender categories
   const uniqueCategories = getUniqueCategories(posts);
@@ -52,10 +59,12 @@ export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
     return pagination;
   });
 
-  categoryPagination.push({
-    ...categoryPagination[0],
-    params: { ...categoryPagination[0].params, page: '1' },
-  });
+  if (categoryPagination.length > 0) {
+    categoryPagination.push({
+      ...categoryPagination[0],
+      params: { ...categoryPagination[0].params, page: '1' },
+    });
+  }
 
   const pagination = [...tagPagination, ...categoryPagination, ...rootPagination];
 

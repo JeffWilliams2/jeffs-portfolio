@@ -15,7 +15,9 @@ export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
   const pageSize = CONFIG_CLIENT.PAGE_SIZE_POST_CARD; // must take entire config here, interesting
 
   const pagination = paginate(posts, { pageSize });
-  pagination.push({ params: { page: '1' }, props: pagination[0].props });
+  if (pagination.length > 0) {
+    pagination.push({ params: { page: '1' }, props: pagination[0].props });
+  }
   return pagination;
 }
 

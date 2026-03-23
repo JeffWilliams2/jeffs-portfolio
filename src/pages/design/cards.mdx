@@ -15,16 +15,16 @@ import { getAllProjects } from '../../modules/project';
 back to [Index](/design)
 
 export const posts = await getAllPostsWithReadingTime();
-export const post = posts[0];
+export const post = posts[0] ?? null;
 export const threePosts = posts.slice(0, 3);
 
-export const postWithoutImage = {
+export const postWithoutImage = post ? {
   ...post,
   data: {
     ...post.data,
     noHero: true,
   },
-};
+} : null;
 
 export const projects = await getAllProjects();
 export const project = projects[0];
@@ -33,7 +33,7 @@ export const threeProjects = projects.slice(0, 3);
 ## PostCard
 
 <div class="not-prose">
-  <PostCard post={post} />
+  {post ? <PostCard post={post} /> : <p>No posts available</p>}
 </div>
 
 ---
@@ -41,7 +41,7 @@ export const threeProjects = projects.slice(0, 3);
 ## PostCard without Image
 
 <div class="not-prose">
-  <PostCard post={postWithoutImage} />
+  {postWithoutImage ? <PostCard post={postWithoutImage} /> : <p>No posts available</p>}
 </div>
 
 ---

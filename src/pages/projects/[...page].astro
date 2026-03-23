@@ -14,7 +14,9 @@ export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
   const pageSize = CONFIG_CLIENT.PAGE_SIZE_PROJECT_CARD;
 
   const pagination = paginate(sortedProjects, { pageSize });
-  pagination.push({ params: { page: '1' }, props: pagination[0].props });
+  if (pagination.length > 0) {
+    pagination.push({ params: { page: '1' }, props: pagination[0].props });
+  }
   return pagination;
 }
 

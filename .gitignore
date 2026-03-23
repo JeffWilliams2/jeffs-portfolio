@@ -35,4 +35,4 @@ pnpm-debug.log*
 !.astro/types.d.ts
 
 # Scripts
-.scripts/local
+.scripts/localdocs/working-notes/

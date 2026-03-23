@@ -2,6 +2,7 @@
 title: Real-Time Stock Market Data Pipeline
 description: Engineered end-to-end streaming pipeline capturing live stock data from Finnhub API via Kafka producers, landing raw events in MinIO (S3-compatible storage).
 publishDate: 2026-01-20
+heroImage: /images/projects/stock-market-architecture.svg
 heroAlt: Real-Time Stock Market Data Pipeline Architecture
 draft: false
 tags: ["KAFKA", "DBT", "SNOWFLAKE", "AIRFLOW", "PYTHON", "DOCKER"]
@@ -31,42 +32,7 @@ The pipeline handles high-throughput financial data streams, implements schema e
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Finnhub API                               │
-│              Live Stock Market WebSocket/REST                │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Kafka Producers (Python)                        │
-│        Real-time event capture with schema validation       │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                Apache Kafka Cluster                          │
-│       Distributed event streaming with partitioning         │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│           BRONZE: Raw Events (MinIO S3)                     │
-│         Immutable event store with time partitioning        │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│        SILVER: Cleansed Data (dbt + Snowflake)              │
-│     Deduplication | Schema enforcement | Validation         │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│         GOLD: Analytics Tables (Snowflake)                  │
-│       Aggregations | Time-series | Market indicators        │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Power BI Dashboards                             │
-│      Real-time market analytics and trading insights        │
-└─────────────────────────────────────────────────────────────┘
-```
+![Real-Time Stock Market Data Pipeline Architecture](/images/projects/stock-market-architecture.svg)
 
 ## Technology Stack
 
@@ -118,7 +84,7 @@ Connected Power BI to Snowflake Gold layer using DirectQuery for near-real-time 
 
 - **Kafka replication factor 3:** Ensures no data loss during broker failures
 - **Idempotent producers:** Prevents duplicate events during retries
-- **Schema evolution:** Avro/JSON schema registry for backward compatibility
+- **Schema evolution:** Confluent Schema Registry for backward compatibility
 - **API rate limiting:** Exponential backoff and request queuing
 - **Connection resilience:** Automatic reconnection to Finnhub WebSocket
 - **Monitoring:** Prometheus metrics for lag, throughput, and error rates

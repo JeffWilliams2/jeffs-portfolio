@@ -2,7 +2,8 @@
 title: Portfolio Website
 description: Personal portfolio built with Astro, React, and Tailwind CSS. Optimized for performance with perfect Lighthouse scores. Features blog with MDX, dark mode, and SEO optimization.
 publishDate: 2026-02-12
-heroAlt: Portfolio Website Screenshot
+heroImage: ./_images/hero.png
+heroAlt: Portfolio Website Architecture
 draft: false
 tags: ["ASTRO", "REACT", "TYPESCRIPT", "TAILWIND"]
 ---
@@ -32,48 +33,13 @@ Achieved perfect 100/100 Lighthouse scores across all metrics (Performance, Acce
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│              Astro Framework (SSG)                           │
-│    Static Site Generation | Partial Hydration               │
-└──────────────────────────┬──────────────────────────────────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-│   Content    │  │   React      │  │   Styling    │
-│   (MDX)      │  │   Islands    │  │   (Tailwind) │
-│              │  │              │  │              │
-│ - Blog posts │  │ - Theme      │  │ - Utility    │
-│ - Projects   │  │   toggle     │  │   classes    │
-│ - Resume     │  │ - Giscus     │  │ - Dark mode  │
-│              │  │   comments   │  │ - Responsive │
-│              │  │ - Search     │  │              │
-└──────────────┘  └──────────────┘  └──────────────┘
-        │                  │                  │
-        └──────────────────┼──────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Build Pipeline                                  │
-│    TypeScript | Vite | Image Optimization | Minification    │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Static Assets                                   │
-│    HTML | CSS | JS | Images (WebP/AVIF) | Fonts             │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Deployment (Vercel)                             │
-│    CDN | Edge Functions | Analytics | Auto-HTTPS            │
-└─────────────────────────────────────────────────────────────┘
-```
+![Portfolio Website Architecture](/images/projects/portfolio-website-architecture.svg)
 
 ## Technology Stack
 
 | Layer | Technologies |
 |-------|--------------|
-| **Framework** | Astro 4.x, React 18 |
+| **Framework** | Astro 5.x, React 18 |
 | **Language** | TypeScript (strict mode) |
 | **Styling** | Tailwind CSS 3.x, CSS custom properties |
 | **Content** | MDX, Markdown, Content Collections |
@@ -152,7 +118,7 @@ Comprehensive metadata strategy:
 | Metric | Value | Target |
 |--------|-------|--------|
 | **LCP** (Largest Contentful Paint) | 0.8s | &lt;2.5s ✓ |
-| **FID** (First Input Delay) | 8ms | &lt;100ms ✓ |
+| **INP** (Interaction to Next Paint) | 45ms | &lt;200ms ✓ |
 | **CLS** (Cumulative Layout Shift) | 0.001 | &lt;0.1 ✓ |
 | **TTFB** (Time to First Byte) | 120ms | &lt;600ms ✓ |
 

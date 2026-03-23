@@ -31,42 +31,6 @@ Traditional batch ETL processes introduce latency between operational events and
 
 ![Banking CDC Pipeline Architecture](./_images/hero.png)
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                   Source System (OLTP)                       │
-│          PostgreSQL + Faker Data Generator                   │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Change Data Capture                        │
-│              Debezium (captures Postgres WAL)                │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Event Streaming                           │
-│        Apache Kafka (reliable message delivery)              │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   Object Storage                             │
-│        MinIO (S3-compatible staging layer)                   │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                Data Warehouse (Lakehouse)                    │
-│    Snowflake (Bronze → Silver → Gold layers)                 │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│            Transformation & Orchestration                    │
-│         DBT (modeling) + Airflow (scheduling)                │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Analytics & Visualization                   │
-│                   Power BI / SQL Analytics                   │
-└─────────────────────────────────────────────────────────────┘
-```
 
 ## Technology Stack
 

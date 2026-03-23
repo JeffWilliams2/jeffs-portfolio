@@ -32,43 +32,7 @@ The platform processes neuroimaging data (NIfTI/BIDS from OpenNeuro, DICOM from 
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Data Sources (10-20+ TB Daily)           │
-│  OpenNeuro | Research Repos | Hospitalization Data          │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Ingestion Layer (15+ Airflow DAGs)              │
-│  Python | PySpark | Format-Specific Connectors | Validation │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│           BRONZE: Raw Data (Apache Iceberg + MinIO)         │
-│    DICOM, NIfTI/BIDS, FHIR R4 (JSON), CSV → S3 storage      │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│        SILVER: Cleansed & Validated (dbt + PySpark)         │
-│   Data quality checks | Schema enforcement | BIDS           │
-│   conformance | De-identification                           │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│           GOLD: Analytics-Ready (Snowflake)                 │
-│             Dimensional Models | BI Layer                   │
-└──────────────────────────┬──────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│            Governance & Observability Layer                 │
-│  OpenMetadata (Catalog) | Prometheus/Grafana (Monitoring)   │
-└─────────────────────────────────────────────────────────────┘
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Consumption Layer                          │
-│      Data Science | Research Analytics | Clinical Apps      │
-└─────────────────────────────────────────────────────────────┘
-```
+![Healthcare Data Lakehouse Architecture](/images/projects/healthcare-architecture.svg)
 
 **Medallion Architecture:**
 - **Bronze**: Raw, immutable data with lineage tracking — DICOM imaging, NIfTI/BIDS neuroimaging, FHIR R4 resources, CSV extracts

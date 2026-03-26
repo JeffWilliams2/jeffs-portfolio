@@ -1,0 +1,76 @@
+---
+title: Apache Airflow on GCP - Patterns for Production DAGs
+description: Production-ready patterns for Cloud Composer including DAG design, error handling, secrets management, and monitoring strategies.
+publishDate: 2026-02-17
+heroImage: x
+heroAlt: x
+tags:
+  - airflow
+  - cloud-composer
+  - gcp
+  - orchestration
+category: projects
+toc: true
+noHero: true
+draft: false
+---
+
+## Apache Airflow on GCP — Patterns for Production DAGs
+
+Cloud Composer is Google's managed Airflow service, and it's the backbone of most GCP data orchestration. But running Airflow in production is different from writing tutorial DAGs. Here are patterns I've found essential.
+
+### Idempotent Tasks Are Non-Negotiable
+
+Every task in your DAG should be safe to re-run. If a task writes to BigQuery, use write dispositions like `WRITE_TRUNCATE` on the target partition, or implement merge logic. If it writes files to GCS, use deterministic naming so re-runs overwrite rather than duplicate.
+
+This sounds simple, but it's the single most important property of a production pipeline. When (not if) something fails at 3am, you need to be able to hit "Clear" on the failed task and walk away.
+
+### Separate Orchestration from Computation
+
+Your Airflow worker nodes should not be doing heavy computation. Use Airflow to *trigger* work — a Dataproc batch, a BigQuery job, a Cloud Function — not to *do* the work. This keeps your Composer environment lean and prevents resource contention between task scheduling and data processing.
+
+```python
+# Good: Airflow triggers BigQuery, BigQuery does the work
+BigQueryInsertJobOperator(
+    task_id="transform",
+    configuration={
+        "query": {
+            "query": "SELECT ... FROM ... WHERE dt = '{{ ds }}'",
+            "destinationTable": {"projectId": "p", "datasetId": "d", "tableId": "t"},
+            "writeDisposition": "WRITE_TRUNCATE",
+        }
+    }
+)
+
+# Avoid: doing pandas transformations inside a PythonOperator
+```
+
+### Use Templating, Not Python Logic, for Dates
+
+Airflow's Jinja templating (`{{ ds }}`, `{{ data_interval_start }}`) is aware of backfills and catchup runs. If you hardcode `datetime.now()` in a PythonOperator, your backfills will process today's data repeatedly instead of the intended historical date.
+
+### Sensor Anti-Patterns
+
+Sensors are useful but dangerous. A `GCSObjectExistenceSensor` waiting for a file that never arrives will block a worker slot indefinitely (in the default mode). Use `mode="reschedule"` so the sensor releases its slot between pokes, and always set a `timeout`.
+
+### Structure Your DAG Repository
+
+```
+dags/
+├── ingestion/
+│   ├── ingest_events.py
+│   └── ingest_transactions.py
+├── transformation/
+│   └── transform_events.py
+├── utils/
+│   ├── bq_helpers.py
+│   └── slack_alerts.py
+└── config/
+    └── table_configs.yaml
+```
+
+Keep DAG files focused. Extract shared logic into utility modules. Store configuration (table names, schemas, schedules) in YAML files that DAGs read at parse time. This makes your DAGs readable and your configs auditable.
+
+**Takeaway:** Production Airflow is about discipline — idempotency, separation of concerns, proper templating, and clean project structure. Get these right and your pipelines become boring in the best way.
+
+---

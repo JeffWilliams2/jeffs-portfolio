@@ -1,0 +1,112 @@
+---
+title: Docker for Data Engineers — Containerizing Python Pipelines
+description: Build reproducible data pipelines with Docker. Covers multi-stage builds, dependency management, and patterns for PySpark and Airflow containers.
+publishDate: 2026-02-10
+heroImage: x
+heroAlt: x
+tags:
+  - docker
+  - python
+  - data-engineering
+  - devops
+category: projects
+toc: true
+noHero: true
+draft: false
+---
+
+## Docker for Data Engineers — Containerizing Python Pipelines
+
+Data engineers don't need to become Docker experts, but understanding containers well enough to package and ship your own pipelines is a baseline skill. Here's the practical subset that matters.
+
+### Why Containers Matter for Data Pipelines
+
+The classic problem: your PySpark job runs perfectly on your laptop, fails in production because the cluster has a different version of `pyarrow`. Or your Airflow task depends on a system library that exists on your machine but not on the Composer worker.
+
+Containers solve this by packaging your code, its dependencies, and its runtime environment into a single image. What runs locally runs identically in staging and production.
+
+### A Production-Ready Dockerfile for a Python Pipeline
+
+```dockerfile
+# Use a specific version, never "latest"
+FROM python:3.11-slim AS base
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+# Install system deps (some Python packages need build tools)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gcc libpq-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r pipeline && useradd -r -g pipeline pipeline
+
+# Copy and install Python dependencies first (layer caching)
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY src/ ./src/
+COPY config/ ./config/
+
+# Switch to non-root user
+USER pipeline
+
+ENTRYPOINT ["python", "-m", "src.main"]
+```
+
+### Key Principles
+
+**Pin everything.** Base image tags, Python package versions in `requirements.txt`, system package versions if possible. Reproducibility is the entire point.
+
+**Layer ordering matters.** Docker caches layers. By copying `requirements.txt` and installing dependencies *before* copying your source code, you avoid reinstalling all packages every time you change a line of code. This cuts build times from minutes to seconds during development.
+
+**Run as non-root.** This is a security baseline. Your pipeline doesn't need root privileges to read from GCS and write to BigQuery.
+
+**Keep images small.** Use `slim` or `alpine` base images. Remove build tools after compilation with multi-stage builds if needed. Smaller images pull faster, which matters when Kubernetes is scaling up pods.
+
+### Multi-Stage Build for Compiled Dependencies
+
+If you need packages that compile C extensions (like `grpcio` or `numpy`), use a multi-stage build to keep your final image lean:
+
+```dockerfile
+FROM python:3.11-slim AS builder
+RUN apt-get update && apt-get install -y gcc libpq-dev
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+
+FROM python:3.11-slim AS runtime
+COPY --from=builder /install /usr/local
+COPY src/ /app/src/
+WORKDIR /app
+USER nobody
+ENTRYPOINT ["python", "-m", "src.main"]
+```
+
+The builder stage compiles everything. The runtime stage copies only the installed packages — no compilers, no build tools, no bloat.
+
+### Local Testing Workflow
+
+```bash
+# Build
+docker build -t my-pipeline:dev .
+
+# Run with local env vars and mounted config
+docker run --rm \
+  -e GOOGLE_APPLICATION_CREDENTIALS=/creds/sa-key.json \
+  -v ~/.config/gcloud/sa-key.json:/creds/sa-key.json:ro \
+  -v $(pwd)/config:/app/config:ro \
+  my-pipeline:dev
+
+# Push to Artifact Registry
+docker tag my-pipeline:dev us-central1-docker.pkg.dev/my-project/pipelines/my-pipeline:v1.2.0
+docker push us-central1-docker.pkg.dev/my-project/pipelines/my-pipeline:v1.2.0
+```
+
+**Takeaway:** Containerizing your pipelines eliminates environment drift and makes deployment predictable. Pin versions, order layers for caching, run as non-root, and keep images minimal.
+
+---

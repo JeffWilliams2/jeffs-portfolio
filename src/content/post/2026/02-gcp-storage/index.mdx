@@ -1,0 +1,65 @@
+---
+title: Understanding GCP's Data Storage Spectrum - When to Use What
+description: A practical guide to choosing between Cloud Storage, BigQuery, Bigtable, and Spanner based on your data access patterns and scale requirements.
+publishDate: 2026-01-27
+heroImage: x
+heroAlt: GCP's Data Storage Spectrum
+tags:
+  - data-engineering
+  - cloud-storage
+  - bigquery
+  - bigtable
+  - spanner
+category: projects
+toc: true
+noHero: true
+draft: false
+---
+
+## Understanding GCP's Data Storage Spectrum - When to Use What
+
+One of the most important architectural decisions in any data platform is choosing the right storage layer. GCP offers several, and each is optimized for different access patterns.
+
+### Cloud Storage (GCS)
+
+GCS is your data lake foundation. It's object storage — cheap, durable, and format-agnostic. Use it for raw data landing zones, Parquet/Avro archives, ML training datasets, and as a staging layer between systems. It's not a database; don't try to query it directly for analytical workloads (use BigQuery external tables or load the data instead).
+
+**Best for:** Raw ingestion, archival, inter-system data exchange, large file storage.
+
+### BigQuery
+
+BigQuery is a serverless columnar analytics warehouse. It excels at scanning massive datasets for aggregations, joins, and analytical queries. It's your primary destination for anything that analysts, dashboards, or ML training pipelines will query.
+
+**Best for:** Analytical queries, BI/reporting, ad-hoc analysis, ML feature storage.
+
+### Cloud Bigtable
+
+Bigtable is a wide-column NoSQL store designed for low-latency, high-throughput reads and writes. Think time-series data, IoT telemetry, or user activity streams where you need single-digit millisecond reads at scale.
+
+**Best for:** Time-series, high-throughput key-value lookups, real-time serving.
+
+### Cloud Spanner
+
+Spanner is a globally distributed relational database with strong consistency. It's for workloads that need both relational semantics (transactions, foreign keys) and horizontal scalability. Financial systems, inventory management, and global user databases are typical use cases.
+
+**Best for:** Transactional workloads requiring global scale and strong consistency.
+
+### Cloud SQL / AlloyDB
+
+For traditional OLTP workloads that don't need global distribution, Cloud SQL (managed MySQL/PostgreSQL) or AlloyDB (PostgreSQL-compatible, analytics-friendly) are simpler and cheaper than Spanner.
+
+**Best for:** Application backends, moderate-scale transactional workloads.
+
+### The Pattern
+
+In most data platforms, data flows through these layers:
+
+```
+Sources → GCS (raw) → BigQuery (analytics) → Bigtable/Spanner (serving)
+```
+
+Raw data lands in GCS. ETL/ELT processes transform it into BigQuery for analysis. If low-latency serving is needed (APIs, real-time apps), a subset gets pushed to Bigtable or Spanner.
+
+**Takeaway:** The right storage choice depends on your access pattern — analytical scans, key-value lookups, or transactional operations. Most platforms use multiple storage layers, each optimized for its role.
+
+---

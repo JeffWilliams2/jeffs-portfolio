@@ -1,0 +1,73 @@
+---
+title: Grafana Dashboards for Data Platform Health — What to Build First
+description: Build actionable Grafana dashboards for data platforms. Pipeline latency, data freshness, error rates, and cost tracking visualizations.
+publishDate: 2026-03-22
+heroImage: x
+heroAlt: x
+tags:
+  - grafana
+  - monitoring
+  - data-engineering
+category: projects
+toc: true
+noHero: true
+draft: false
+---
+
+## Grafana Dashboards for Data Platform Health — What to Build First
+
+When you first set up Grafana for a data platform, it's tempting to build dozens of dashboards. Don't. Start with three, make them excellent, and expand from there.
+
+### Dashboard 1: Pipeline Health Overview
+
+This is the dashboard your on-call engineer opens first. It answers one question: **is anything broken right now?**
+
+**Panels:**
+
+- **DAG/Pipeline status grid.** A table or stat panel showing each pipeline's last run status (success/failure/running), last completion time, and next scheduled run. Color-code by status: green, red, yellow.
+- **Data freshness gauges.** For each critical serving table, show the age of the most recent record. If your SLA is "data no older than 1 hour," the gauge should go red at 60 minutes.
+- **Failure timeline.** A time-series panel showing pipeline failures over the past 7 days. Spikes indicate systemic issues vs. one-off flakes.
+- **Active alerts.** An embedded alert list showing any currently firing alerts.
+
+```sql
+-- Data freshness query (BigQuery → Grafana via BigQuery plugin)
+SELECT
+  table_name,
+  TIMESTAMP_DIFF(CURRENT_TIMESTAMP(), max_event_ts, MINUTE) AS freshness_minutes
+FROM `my_project.monitoring.table_freshness`
+ORDER BY freshness_minutes DESC
+```
+
+### Dashboard 2: Resource Utilization
+
+This dashboard answers: **are we right-sized, and are we spending efficiently?**
+
+**Panels:**
+
+- **BigQuery slot utilization** over time. If you're on flat-rate pricing, this shows whether you're under- or over-provisioned. If on-demand, track bytes scanned per day.
+- **Top queries by cost.** A table showing the top 10 most expensive queries in the past 24 hours, with user and bytes billed. This is your cost optimization hit list.
+- **Dataproc/Spark job resource usage.** CPU and memory utilization per job. If your executors consistently use 20% of allocated memory, you're over-provisioned.
+- **GCS storage growth.** Track bucket sizes over time to catch unbounded growth in raw/staging zones.
+
+### Dashboard 3: Data Quality Scorecard
+
+This is the dashboard your data team and stakeholders care about: **can we trust the data?**
+
+**Panels:**
+
+- **dbt test results.** Pass/fail/warn counts from the latest dbt run. Break down by model or severity.
+- **Null rate tracking.** Time-series of null percentages for critical columns. A sudden spike in nulls in `customer_id` means something upstream changed.
+- **Row count trends.** Daily record counts for key tables, with 7-day moving average and anomaly bands. This catches both drops (missing data) and spikes (duplicates).
+- **Schema change log.** A table showing recent schema modifications detected by your monitoring. Unexpected column additions or type changes are early warnings of upstream contract violations.
+
+### Grafana Best Practices for Data Teams
+
+**Use variables for environment switching.** Define a dashboard variable for `project` or `environment` so the same dashboard works for dev, staging, and production.
+
+**Template your queries.** If you have 20 pipelines, don't create 20 hardcoded panels. Use a variable that dynamically populates from a query (`SELECT DISTINCT pipeline_name FROM monitoring.runs`) and template your panels against it.
+
+**Set meaningful alert thresholds.** An alert that fires every day gets ignored. Start with generous thresholds, tighten them as you learn your baseline. A freshness alert at 2x your normal latency is a good starting point.
+
+**Link dashboards to runbooks.** Every alert panel should include a link to a runbook or troubleshooting guide. When that 3am page fires, the on-call engineer shouldn't need to reverse-engineer what to do.
+
+**Takeaway:** Three dashboards — pipeline health, resource utilization, and data quality — cover 90% of your observability needs. Build these well before expanding. Make them actionable, not decorative.

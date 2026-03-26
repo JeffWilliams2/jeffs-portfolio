@@ -1,0 +1,123 @@
+---
+title: Kubernetes Fundamentals for Data Engineers — What You Actually Need to Know
+description: The essential Kubernetes concepts for data engineers - pods, deployments, jobs, and resource management for Spark and Airflow workloads.
+publishDate: 2026-03-12
+heroImage: x
+heroAlt: x
+tags:
+  - kubernetes
+  - eks
+  - gke
+  - devops
+  - data-engineering
+category: projects
+toc: true
+noHero: true
+draft: false
+---
+
+## Kubernetes Fundamentals for Data Engineers — What You Actually Need to Know
+
+You don't need to be a Kubernetes administrator to work effectively as a data engineer on a platform that runs on K8s. But you do need a working mental model of how it operates and enough fluency to debug, deploy, and reason about your workloads. Here's the essential subset.
+
+### The Core Mental Model
+
+Kubernetes is a container orchestrator. You describe the *desired state* of your workload (how many replicas, how much CPU/memory, which image to run), and Kubernetes continuously works to make reality match that description. If a container crashes, K8s restarts it. If a node dies, K8s reschedules your workload onto a healthy node.
+
+Everything in Kubernetes is a **resource** described in YAML. You apply YAML manifests, and the system converges toward what you described.
+
+### The Resources That Matter for Data Workloads
+
+**Pod:** The smallest deployable unit. A pod runs one or more containers. For most data engineering work, think of a pod as "one running instance of your pipeline container."
+
+**Deployment:** Manages a set of identical pods. You specify a replica count and an image, and the Deployment ensures that many pods are always running. Use Deployments for long-running services like an API that serves model predictions.
+
+**Job:** Runs a pod to completion and then stops. This is what you want for batch data pipelines — run the ETL, exit successfully, done. If it fails, Kubernetes can retry it based on your `backoffLimit`.
+
+**CronJob:** A Job on a schedule. Think of it as a lightweight alternative to Airflow for simple scheduled tasks.
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: daily-etl
+spec:
+  schedule: "0 6 * * *"       # 6am UTC daily
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: etl
+            image: us-central1-docker.pkg.dev/my-project/pipelines/etl:v1.0.0
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "500m"
+              limits:
+                memory: "4Gi"
+                cpu: "1000m"
+            env:
+            - name: BQ_DATASET
+              value: "curated"
+          restartPolicy: OnFailure
+      backoffLimit: 3
+```
+
+**Service:** Exposes pods on a stable network endpoint. If your pipeline includes an API component, a Service gives it a consistent DNS name and load balances across pod replicas.
+
+**ConfigMap and Secret:** Externalize configuration and sensitive values (API keys, database passwords) from your container image. Mount them as environment variables or files.
+
+### Resource Requests and Limits — Get This Right
+
+This is where most data engineering issues on Kubernetes start. Every container should declare:
+
+- **Requests:** The minimum resources Kubernetes guarantees. The scheduler uses this to decide which node can run your pod.
+- **Limits:** The maximum resources your container can consume. If your container exceeds the memory limit, Kubernetes kills it (OOMKilled).
+
+```yaml
+resources:
+  requests:
+    memory: "2Gi"
+    cpu: "500m"    # 0.5 cores
+  limits:
+    memory: "4Gi"
+    cpu: "1000m"   # 1 core
+```
+
+For data pipelines, set memory limits generously. A Spark executor or Pandas job that OOMKills at 90% completion is worse than slightly over-provisioning.
+
+### Essential kubectl Commands
+
+```bash
+# See what's running
+kubectl get pods -n data-pipelines
+kubectl get jobs -n data-pipelines
+
+# Check why a pod failed
+kubectl describe pod <pod-name> -n data-pipelines
+kubectl logs <pod-name> -n data-pipelines
+
+# See previous container logs (after a crash)
+kubectl logs <pod-name> -n data-pipelines --previous
+
+# Port-forward to a service for local debugging
+kubectl port-forward svc/my-api 8080:80 -n data-pipelines
+
+# Apply a manifest
+kubectl apply -f my-job.yaml
+```
+
+### GKE vs. EKS — What Differs
+
+If you're on GCP, you'll use GKE (Google Kubernetes Engine). On AWS, EKS (Elastic Kubernetes Service). The Kubernetes API is identical — your YAML manifests are portable. The differences are in networking, IAM integration, and managed add-ons.
+
+On GKE, Workload Identity lets pods authenticate to GCP services (BigQuery, GCS) using a Kubernetes service account mapped to a Google service account — no key files needed. On EKS, the equivalent is IAM Roles for Service Accounts (IRSA).
+
+### When Kubernetes is Overkill
+
+For simple scheduled SQL transformations, Airflow + BigQuery is simpler. For PySpark batch jobs, Dataproc Serverless avoids K8s entirely. Kubernetes shines when you need custom containers, long-running services, or fine-grained resource control that managed services don't offer.
+
+**Takeaway:** Kubernetes isn't magic — it's a declarative system for running containers reliably. Know Pods, Jobs, Deployments, resource requests/limits, and basic `kubectl`, and you'll be effective as a data engineer on any K8s-based platform.
+
+---

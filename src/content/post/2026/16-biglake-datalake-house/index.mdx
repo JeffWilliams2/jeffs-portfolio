@@ -1,0 +1,64 @@
+---
+title: Designing a Data Lakehouse on GCP with BigLake
+description: Unify your data lake and warehouse with BigLake. Query Parquet and ORC files in Cloud Storage directly from BigQuery with fine-grained access control.
+publishDate: 2026-03-25
+heroImage: x
+heroAlt: x
+tags:
+  - gcp
+  - biglake
+  - lakehouse
+  - architecture
+category: projects
+toc: true
+noHero: true
+draft: false
+---
+
+## Designing a Data Lakehouse on GCP with BigLake
+
+The data lakehouse pattern aims to combine the flexibility of a data lake (store anything in open formats on cheap storage) with the performance and governance of a data warehouse. On GCP, BigLake is the key enabler.
+
+### What BigLake Does
+
+BigLake creates a unified access layer over data stored in GCS (and other clouds). You define BigLake tables in BigQuery's metastore, pointing to Parquet, ORC, Avro, or Delta Lake files in GCS. These tables are then queryable through BigQuery with the same SQL interface, access controls, and performance optimizations as native BigQuery tables.
+
+The key insight: your data stays in open formats on GCS, but you get BigQuery's governance and query engine on top.
+
+### Why This Matters
+
+**Open formats prevent vendor lock-in.** Parquet files in GCS can be read by Spark, Presto, DuckDB, or any tool that understands the format. You're not locked into BigQuery's internal storage.
+
+**Unified governance.** BigLake applies BigQuery's column-level security and row-level access policies to data stored in GCS. Previously, securing a data lake meant managing IAM at the bucket/object level — far too coarse for most access control requirements.
+
+**Cost flexibility.** You can keep cold or infrequently accessed data in GCS (at GCS pricing) while promoting hot datasets to native BigQuery storage for maximum query performance. BigLake gives you a single SQL interface across both.
+
+### A Practical Setup
+
+```sql
+-- Create a BigLake connection
+CREATE EXTERNAL CONNECTION `my_project.us.my_connection`
+OPTIONS (type = 'CLOUD_RESOURCE');
+
+-- Create a BigLake table over Parquet files
+CREATE EXTERNAL TABLE `my_project.lakehouse.events`
+WITH CONNECTION `my_project.us.my_connection`
+OPTIONS (
+  format = 'PARQUET',
+  uris = ['gs://my-lake/events/*']
+);
+
+-- Query it like any BigQuery table
+SELECT action, COUNT(*) as cnt
+FROM `my_project.lakehouse.events`
+WHERE event_date = '2025-03-17'
+GROUP BY action;
+```
+
+### When to Go Lakehouse vs. Pure Warehouse
+
+Use a lakehouse approach when you have large volumes of data in open formats that multiple engines need to access, or when you want to minimize storage costs for historical data. Use native BigQuery tables for your hottest, most-queried datasets where maximum performance matters.
+
+Most production platforms end up with a hybrid: BigLake for the broad lake layer, native BigQuery for curated/serving datasets.
+
+**Takeaway:** BigLake bridges the gap between data lakes and warehouses on GCP. Store data in open formats, govern it centrally, and query it with BigQuery — without forcing everything into proprietary storage.

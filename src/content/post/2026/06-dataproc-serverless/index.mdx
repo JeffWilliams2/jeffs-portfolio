@@ -1,0 +1,129 @@
+---
+title: Building a Lightweight ELT Pipeline with Dataproc Serverless and BigQuery
+description: Run Spark jobs without cluster management. Build an end-to-end ELT pipeline using Dataproc Serverless for transformations and BigQuery for analytics.
+publishDate: 2026-02-24
+heroImage: x
+heroAlt: x
+tags:
+  - gcp
+  - dataproc
+  - spark
+  - bigquery
+  - elt
+
+category: projects
+toc: true
+noHero: true
+draft: false
+---
+
+## Building a Lightweight ELT Pipeline with Dataproc Serverless and BigQuery
+
+Dataproc Serverless lets you submit PySpark jobs without managing a cluster. For many ELT workloads, this is the sweet spot between the simplicity of BigQuery SQL and the flexibility of a full Spark environment. Here's a practical walkthrough.
+
+### When Dataproc Serverless Makes Sense
+
+BigQuery handles most transformations well natively. But there are cases where Spark is the better tool: complex row-level transformations involving external libraries, processing semi-structured data that doesn't map cleanly to SQL, or fan-out patterns where you need to write results to multiple sinks (BigQuery, GCS, Pub/Sub) from a single job.
+
+Dataproc Serverless is ideal here because you skip cluster lifecycle management entirely. You submit a job, it auto-scales, and you pay only for the resources consumed.
+
+### The Architecture
+
+```
+GCS (raw)  →  Dataproc Serverless (PySpark)  →  BigQuery (curated)
+                      ↓
+               GCS (processed parquet, archive)
+```
+
+Raw data lands in a GCS bucket. A PySpark job reads it, applies transformations, and writes the results to both BigQuery (for analytics) and GCS as Parquet (for replay or downstream consumption).
+
+### The PySpark Job
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+
+spark = SparkSession.builder \
+    .appName("elt-pipeline") \
+    .getOrCreate()
+
+# Read raw JSON from GCS
+raw = spark.read.json("gs://my-bucket/raw/events/2025-03-17/*.json")
+
+# Transform: flatten nested structs, cast types, add metadata
+transformed = (
+    raw
+    .select(
+        F.col("event_id"),
+        F.col("payload.user_id").alias("user_id"),
+        F.col("payload.action").alias("action"),
+        F.to_timestamp("event_time").alias("event_ts"),
+        F.current_timestamp().alias("processed_at")
+    )
+    .filter(F.col("event_id").isNotNull())
+    .dropDuplicates(["event_id"])
+)
+
+# Write to BigQuery
+transformed.write \
+    .format("bigquery") \
+    .option("table", "my_project.curated.events") \
+    .option("temporaryGcsBucket", "my-bucket-temp") \
+    .option("partitionField", "event_ts") \
+    .option("partitionType", "DAY") \
+    .mode("append") \
+    .save()
+
+# Write to GCS as Parquet for archive
+transformed.write \
+    .mode("overwrite") \
+    .parquet("gs://my-bucket/processed/events/2025-03-17/")
+```
+
+### Submitting the Job
+
+```bash
+gcloud dataproc batches submit pyspark \
+    gs://my-bucket/jobs/elt_pipeline.py \
+    --region=us-central1 \
+    --subnet=default \
+    --jars=gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.32.2.jar \
+    --properties="spark.executor.memory=4g,spark.executor.cores=2"
+```
+
+Key flags: `--jars` includes the BigQuery connector, and `--properties` lets you tune Spark without touching cluster config.
+
+### Orchestrating with Cloud Composer (Airflow)
+
+In production, wrap this in an Airflow DAG:
+
+```python
+from airflow.providers.google.cloud.operators.dataproc import (
+    DataprocCreateBatchOperator
+)
+
+batch_config = {
+    "pyspark_batch": {
+        "main_python_file_uri": "gs://my-bucket/jobs/elt_pipeline.py",
+        "jar_file_uris": [
+            "gs://spark-lib/bigquery/spark-bigquery-with-dependencies_2.12-0.32.2.jar"
+        ],
+    },
+    "runtime_config": {
+        "properties": {
+            "spark.executor.memory": "4g"
+        }
+    }
+}
+
+submit_job = DataprocCreateBatchOperator(
+    task_id="run_elt",
+    batch=batch_config,
+    batch_id="elt-{{ ds_nodash }}",
+    region="us-central1",
+)
+```
+
+**Takeaway:** Dataproc Serverless removes the operational overhead of Spark clusters while keeping the full power of PySpark available for transformations that outgrow SQL. Pair it with BigQuery as your serving layer and Airflow for orchestration, and you have a clean, scalable ELT stack on GCP.
+
+---

@@ -1,0 +1,146 @@
+---
+title: CI/CD for Data Pipelines — From Git Push to Production
+description: Automate data pipeline deployments with GitHub Actions. Testing strategies, dbt CI, Terraform integration, and rollback patterns.
+publishDate: 2026-03-17
+heroImage: x
+heroAlt: x
+tags:
+  - cicd
+  - devops
+  - github-actions
+  - data-engineering
+category: projects
+toc: true
+noHero: true
+draft: false
+---
+
+## CI/CD for Data Pipelines — From Git Push to Production
+
+Data pipelines deserve the same CI/CD rigor as application code. A merge to `main` should trigger tests, build artifacts, and deploy to production without manual intervention. Here's a practical setup.
+
+### What "CI/CD for Data" Looks Like
+
+**Continuous Integration:** On every pull request, automatically run unit tests for transformation logic, lint SQL and Python code, validate DAG structure (no cycles, no missing dependencies), build Docker images, and run dbt compile or dry-run BigQuery queries to catch syntax errors.
+
+**Continuous Deployment:** On merge to `main`, build and push Docker images to Artifact Registry, deploy updated DAG files to Cloud Composer, run dbt migrations against the target warehouse, and apply infrastructure changes via Terraform.
+
+### A GitHub Actions Pipeline
+
+```yaml
+name: Data Pipeline CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+env:
+  GCP_PROJECT: my-project
+  REGION: us-central1
+  REGISTRY: us-central1-docker.pkg.dev/my-project/pipelines
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      - name: Lint
+        run: |
+          ruff check src/
+          ruff format --check src/
+
+      - name: Unit tests
+        run: pytest tests/unit/ -v --tb=short
+
+      - name: Validate DAGs
+        run: python scripts/validate_dags.py
+
+      - name: dbt compile (dry run)
+        run: |
+          cd dbt/
+          dbt compile --target ci
+        env:
+          DBT_PROFILES_DIR: ./profiles
+
+  build-and-deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.SA_EMAIL }}
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Build and push image
+        run: |
+          docker build -t ${{ env.REGISTRY }}/etl:${{ github.sha }} .
+          docker push ${{ env.REGISTRY }}/etl:${{ github.sha }}
+
+      - name: Deploy DAGs to Composer
+        run: |
+          gsutil -m rsync -r -d dags/ \
+            gs://${{ secrets.COMPOSER_BUCKET }}/dags/
+
+      - name: Run dbt
+        run: |
+          cd dbt/
+          dbt run --target prod
+          dbt test --target prod
+        env:
+          DBT_PROFILES_DIR: ./profiles
+```
+
+### Key Practices
+
+**DAG validation in CI.** Import every DAG file and check for parse errors before they reach Composer. A broken DAG file can take down the entire Airflow scheduler.
+
+```python
+# scripts/validate_dags.py
+import importlib, pathlib, sys
+
+dag_dir = pathlib.Path("dags")
+errors = []
+for f in dag_dir.glob("**/*.py"):
+    try:
+        spec = importlib.util.spec_from_file_location(f.stem, f)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+    except Exception as e:
+        errors.append(f"{f}: {e}")
+
+if errors:
+    print("\n".join(errors))
+    sys.exit(1)
+print("All DAGs valid.")
+```
+
+**Workload Identity Federation for auth.** Don't store service account key files in GitHub Secrets. Use Workload Identity Federation so your GitHub Actions runner authenticates to GCP without long-lived credentials.
+
+**Image tagging strategy.** Tag images with the Git SHA (`etl:abc123def`) for traceability. You can always trace a running container back to the exact commit that built it. Optionally add a `latest` or `stable` tag for convenience, but the SHA tag is the source of truth.
+
+**Database migrations as code.** dbt handles SQL model changes. For schema migrations on transactional databases, use tools like Alembic (SQLAlchemy) or Flyway. Never apply schema changes manually.
+
+**Takeaway:** Automate everything between `git push` and production. Validate DAGs, lint code, run tests, build images, and deploy — all triggered by Git events. Manual deployments are a liability.
+
+---

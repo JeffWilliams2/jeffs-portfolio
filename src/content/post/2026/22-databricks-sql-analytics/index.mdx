@@ -1,0 +1,122 @@
+---
+title: Databricks SQL Analytics Without the Spark Complexity
+description: Databricks SQL provides a SQL-first analytics experience on top of the Lakehouse, powered by dedicated SQL warehouses optimized for BI and reporting.
+publishDate: 2026-03-29
+heroImage: x
+heroAlt: x
+tags:
+  - databricks
+  - sql
+  - analytics
+  - data-engineering
+category: projects
+toc: true
+noHero: true
+draft: false
+---
+
+# Databricks SQL: Analytics Without the Spark Complexity
+
+Not every analyst or data consumer needs to write PySpark. Databricks SQL provides a SQL-first analytics experience on top of the Lakehouse, powered by dedicated SQL warehouses optimized for BI and reporting.
+
+### What Databricks SQL Actually Is
+
+Databricks SQL is a SQL editor, dashboarding tool, and query engine rolled into one. You write SQL against your Delta Lake tables, build visualizations directly in the interface, and schedule queries to refresh on a cadence. It connects to BI tools like Tableau, Looker, and Power BI via standard JDBC/ODBC.
+
+The compute behind it is a **SQL Warehouse** — an auto-scaling cluster optimized for SQL workloads (columnar caching, query compilation, result caching). You don't configure Spark settings; you pick a size and go.
+
+### Setting Up SQL Warehouses
+
+```sql
+-- In the Databricks UI, or via API:
+-- Create a serverless SQL warehouse for ad-hoc queries
+-- Create a dedicated warehouse for BI tool connections
+```
+
+**Serverless warehouses** start in seconds and scale automatically. Best for interactive, bursty workloads.
+
+**Pro/Classic warehouses** give you more control over sizing but have slower cold-start times. Best for predictable, steady BI workloads where you want cost predictability.
+
+For most teams starting out, serverless is the right default. Switch to pro when you need cost controls or specific performance tuning.
+
+### Writing Analytical SQL in Databricks
+
+Databricks SQL supports full ANSI SQL with some powerful additions:
+
+```sql
+-- Medallion architecture query: bronze → silver → gold
+-- This runs against Delta tables in your lakehouse
+
+-- Silver layer: clean and deduplicate
+CREATE OR REPLACE TABLE analytics.silver.transactions AS
+SELECT
+  transaction_id,
+  customer_id,
+  amount,
+  currency,
+  transaction_ts,
+  ROW_NUMBER() OVER (
+    PARTITION BY transaction_id
+    ORDER BY _commit_timestamp DESC
+  ) AS rn
+FROM analytics.bronze.raw_transactions
+WHERE transaction_ts >= '2026-01-01'
+QUALIFY rn = 1;
+
+-- Gold layer: business aggregations
+CREATE OR REPLACE TABLE analytics.gold.daily_revenue AS
+SELECT
+  DATE(transaction_ts) AS txn_date,
+  currency,
+  COUNT(*) AS txn_count,
+  SUM(amount) AS total_revenue,
+  AVG(amount) AS avg_transaction_value,
+  APPROX_PERCENTILE(amount, 0.5) AS median_transaction_value
+FROM analytics.silver.transactions
+GROUP BY 1, 2;
+```
+
+**`QUALIFY`** is a game-changer: it filters window function results without needing a subquery. Databricks SQL supports it natively, and once you use it, you'll never go back to wrapping `ROW_NUMBER()` in a CTE.
+
+### Dashboards and Alerts
+
+Databricks SQL includes a built-in dashboarding layer. It's not as feature-rich as Looker or Tableau, but for operational dashboards and internal reporting, it's surprisingly capable:
+
+- **Visualizations** built directly from query results (bar charts, time series, counters, tables)
+- **Parameterized queries** — add dropdown filters that non-technical users can interact with
+- **Scheduled refreshes** — dashboards auto-update on a cron schedule
+- **Alerts** — define threshold conditions on query results and route notifications to Slack or email
+
+```sql
+-- Parameterized query for a dashboard
+SELECT
+  DATE(transaction_ts) AS txn_date,
+  SUM(amount) AS revenue
+FROM analytics.gold.daily_revenue
+WHERE currency = :currency_param
+  AND txn_date BETWEEN :start_date AND :end_date
+GROUP BY 1
+ORDER BY 1;
+```
+
+### Query Performance Features
+
+Databricks SQL has several performance features that differentiate it from running raw Spark SQL:
+
+**Result caching:** Identical queries return cached results instantly. This dramatically speeds up dashboard refreshes.
+
+**Predictive I/O:** Databricks automatically optimizes file access patterns based on query history. Frequently queried columns get better caching and layout.
+
+**Photon engine:** A C++ native vectorized execution engine that runs SQL queries significantly faster than standard Spark SQL. It's enabled by default on SQL warehouses.
+
+### When to Use Databricks SQL vs. BigQuery
+
+If you're already on Databricks for Spark workloads and your data is in Delta Lake, Databricks SQL keeps everything in one platform — no data movement, unified governance via Unity Catalog, and one set of permissions.
+
+If your organization primarily uses BigQuery and doesn't run significant Spark workloads, adding Databricks SQL just for analytics doesn't make sense. Use BigQuery.
+
+The sweet spot: organizations with both Spark processing pipelines and SQL analytics needs, where maintaining a single Lakehouse simplifies architecture.
+
+**Takeaway:** Databricks SQL brings a warehouse-like SQL experience to the Lakehouse without requiring Spark knowledge. SQL warehouses, built-in dashboards, and Photon engine make it a credible analytics layer — especially when your data already lives in Delta Lake.
+
+---
